@@ -88,3 +88,4 @@ fabric.properties
 .nfs*
 
 node_modules/
+dist/

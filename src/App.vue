@@ -23,11 +23,11 @@
                    aria-label="Star vagran/dxf-viewer on GitHub">dxf-viewer on GitHub</a>
             </div>
             <div class="q-mx-lg">
-                <a class="github-button" href="https://github.com/vagran/dxf-viewer-example"
+                <a class="github-button" href="https://github.com/vagran/dxf-viewer-example-src"
                    data-color-scheme="no-preference: dark; light: light; dark: dark;"
                    data-size="large"
                    data-show-count="true"
-                   aria-label="Star vagran/dxf-viewer-example on GitHub">This example on GitHub</a>
+                   aria-label="Star vagran/dxf-viewer-example-src on GitHub">This example on GitHub</a>
             </div>
         </q-toolbar>
     </q-header>
