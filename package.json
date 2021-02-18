@@ -1,0 +1,34 @@
+{
+    "name": "dxf-viewer-example",
+    "description": "Example of dxf-viewer package application",
+    "repository": "https://github.com/vagran/dxf-viewer-example",
+    "license": "MIT",
+    "version": "1.0.0",
+    "dependencies": {
+        "vue": "^2.6.12",
+        "quasar": "^1.15.3",
+        "@quasar/extras": "^1.9.17",
+        "dxf-viewer": "../../workspace/dxf-viewer",
+        "three": "^0.125.2"
+    },
+    "scripts": {
+        "serve": "vue-cli-service serve --port 9001 --https",
+        "build": "vue-cli-service build --modern"
+    },
+    "devDependencies": {
+        "@vue/cli-service": "^4.5.11",
+        "@vue/cli-plugin-babel": "^4.5.11",
+        "vue-template-compiler": "^2.6.12",
+        "less-loader": "^7.3.0",
+        "less": "^4.1.1",
+        "worker-loader": "^3.0.8"
+    },
+    "keywords": [
+        "dxf",
+        "viewer",
+        "javascript",
+        "webgl",
+        "html5",
+        "example"
+    ]
+}

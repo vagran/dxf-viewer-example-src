@@ -1,0 +1,25 @@
+[v-cloak] > * {
+    display:none;
+}
+
+[v-cloak].hasLoadingPlaceholder::before {
+    content: " ";
+    display: block;
+    width: 500px;
+    height: 150px;
+    background-image: url("../images/loading-placeholder.svg");
+    background-size: cover;
+}
+
+a {
+    color: #007bff;
+    text-decoration: none;
+
+    &:hover {
+        text-decoration: underline;
+    }
+}
+
+body {
+    font-family: "Roboto",sans-serif;
+}
