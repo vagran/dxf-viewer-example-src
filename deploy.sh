@@ -1,6 +1,6 @@
 #!/bin/bash
 
-cd dist
+cd dist || exit
 git init
 git add -A
 git commit -m 'deploy'

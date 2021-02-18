@@ -15,20 +15,10 @@
                 </template>
             </q-file>
             <q-space />
-            <div>
-                <a class="github-button" href="https://github.com/vagran/dxf-viewer"
-                   data-color-scheme="no-preference: dark; light: light; dark: dark;"
-                   data-size="large"
-                   data-show-count="true"
-                   aria-label="Star vagran/dxf-viewer on GitHub">dxf-viewer on GitHub</a>
-            </div>
-            <div class="q-mx-lg">
-                <a class="github-button" href="https://github.com/vagran/dxf-viewer-example-src"
-                   data-color-scheme="no-preference: dark; light: light; dark: dark;"
-                   data-size="large"
-                   data-show-count="true"
-                   aria-label="Star vagran/dxf-viewer-example-src on GitHub">This example on GitHub</a>
-            </div>
+            <q-btn icon="fab fa-github" color="primary" label="dxf-viewer on GitHub" no-caps
+                   class="q-mx-sm" type="a" href="https://github.com/vagran/dxf-viewer" />
+            <q-btn icon="fab fa-github" color="primary" label="This example on GitHub" no-caps
+                   class="q-mx-sm" type="a" href="https://github.com/vagran/dxf-viewer-example-src" />
         </q-toolbar>
     </q-header>
     <q-page-container>
