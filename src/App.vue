@@ -16,9 +16,11 @@
             </q-file>
             <q-space />
             <q-btn icon="fab fa-github" color="primary" label="dxf-viewer on GitHub" no-caps
-                   class="q-mx-sm" type="a" href="https://github.com/vagran/dxf-viewer" />
+                   class="q-mx-sm github" type="a"
+                   href="https://github.com/vagran/dxf-viewer" />
             <q-btn icon="fab fa-github" color="primary" label="This example on GitHub" no-caps
-                   class="q-mx-sm" type="a" href="https://github.com/vagran/dxf-viewer-example-src" />
+                   class="q-mx-sm github" type="a"
+                   href="https://github.com/vagran/dxf-viewer-example-src" />
         </q-toolbar>
     </q-header>
     <q-page-container>
@@ -44,6 +46,9 @@ export default {
                 this._OnFileCleared()
                 return
             }
+            if (this.inputFile) {
+                URL.revokeObjectURL(this.dxfUrl)
+            }
             this.inputFile = file
             this.dxfUrl = URL.createObjectURL(file)
         },
@@ -62,3 +67,11 @@ export default {
     }
 }
 </script>
+
+<style scoped lang="less">
+
+a.github:hover {
+    text-decoration: none;
+}
+
+</style>
