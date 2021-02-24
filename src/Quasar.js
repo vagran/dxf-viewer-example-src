@@ -4,9 +4,13 @@ import "@quasar/extras/fontawesome-v5/fontawesome-v5.css"
 
 import Quasar, {
     Notify,
+    ClosePopup,
 
     QBtn,
+    QCard,
+    QCardSection,
     QCheckbox,
+    QDialog,
     QFile,
     QFooter,
     QHeader,
@@ -36,7 +40,10 @@ export default [Quasar, {
     },
     components: {
         QBtn,
+        QCard,
+        QCardSection,
         QCheckbox,
+        QDialog,
         QFile,
         QFooter,
         QHeader,
@@ -59,6 +66,7 @@ export default [Quasar, {
         QToolbarTitle,
     },
     plugins: {
-        Notify
+        Notify,
+        ClosePopup
     }
 }]

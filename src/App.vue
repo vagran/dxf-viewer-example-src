@@ -14,6 +14,7 @@
                     <span class="text-white">File is processed locally in your browser</span>
                 </template>
             </q-file>
+            <q-btn icon="help" label="About" class="q-ml-lg" @click="aboutDialog = true"></q-btn>
             <q-space />
             <q-btn icon="fab fa-github" color="primary" label="dxf-viewer on GitHub" no-caps
                    class="q-mx-sm github" type="a"
@@ -26,6 +27,18 @@
     <q-page-container>
         <ViewerPage :dxfUrl="dxfUrl" />
     </q-page-container>
+
+    <q-dialog v-model="aboutDialog">
+        <q-card>
+            <q-card-section class="row items-center q-pb-sm">
+                <div class="text-h6">About</div>
+                <q-space />
+                <q-btn icon="close" flat round dense v-close-popup />
+            </q-card-section>
+            <q-separator />
+            <q-card-section style="max-height: 50vh" class="scroll" v-html="aboutHtml" />
+        </q-card>
+    </q-dialog>
 </q-layout>
 </template>
 <script>
@@ -36,7 +49,8 @@ export default {
     data() {
         return {
             dxfUrl: null,
-            inputFile: null
+            inputFile: null,
+            aboutDialog: false
         }
     },
 
@@ -64,6 +78,10 @@ export default {
                 })
             }
         }
+    },
+
+    created() {
+        this.aboutHtml = document.getElementById("about").innerHTML
     }
 }
 </script>
