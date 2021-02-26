@@ -24,9 +24,9 @@ export default {
         dxfUrl: {
             default: null
         },
-        /** List of font URLs. Files should have typeface.js format. Fonts are used in the specified
-         * order, each one is checked until necessary glyph is found. Text is not rendered if fonts
-         * are not specified.
+        /** List of font URLs. Files should have TTF format. Fonts are used in the specified order,
+         * each one is checked until necessary glyph is found. Text is not rendered if fonts are not
+         * specified.
          */
         fonts: {
             default: null
