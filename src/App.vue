@@ -81,7 +81,11 @@ export default {
     },
 
     created() {
-        this.aboutHtml = document.getElementById("about").innerHTML
+        const aboutBlock = document.getElementById("about")
+        this.aboutHtml = aboutBlock.innerHTML
+        aboutBlock.style.display = "none"
+        /* For web crawler. */
+        document.getElementById("noscript").innerText = aboutBlock.innerText
     },
     destroyed() {
         if (this.dxfUrl) {
