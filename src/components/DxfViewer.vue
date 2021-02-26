@@ -35,7 +35,8 @@ export default {
             default() {
                 return {
                     clearColor: new three.Color("#fff"),
-                    autoResize: true
+                    autoResize: true,
+                    colorCorrection: true
                 }
             }
         }
