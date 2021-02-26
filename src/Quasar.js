@@ -33,11 +33,7 @@ import Quasar, {
     QToolbarTitle,
 } from "quasar"
 
-
 export default [Quasar, {
-    config: {
-        notify: { /* Notify defaults */}
-    },
     components: {
         QBtn,
         QCard,

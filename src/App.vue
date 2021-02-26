@@ -60,7 +60,7 @@ export default {
                 this._OnFileCleared()
                 return
             }
-            if (this.inputFile) {
+            if (this.dxfUrl) {
                 URL.revokeObjectURL(this.dxfUrl)
             }
             this.inputFile = file
@@ -82,6 +82,11 @@ export default {
 
     created() {
         this.aboutHtml = document.getElementById("about").innerHTML
+    },
+    destroyed() {
+        if (this.dxfUrl) {
+            URL.revokeObjectURL(this.dxfUrl)
+        }
     }
 }
 </script>
