@@ -1,5 +1,5 @@
 <template>
-<q-layout view="hHh lpr fff">
+<q-layout view="hHh lpr fff" data-nosnippet>
     <q-header>
         <q-toolbar>
             <q-toolbar-title :shrink="true" >DXF viewer</q-toolbar-title>
