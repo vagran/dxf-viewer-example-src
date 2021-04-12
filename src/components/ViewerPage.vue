@@ -1,8 +1,9 @@
 <template>
     <q-page class="row items-stretch root">
-        <div class="col">
+        <div class="col relative-position">
+            <slot></slot>
             <DxfViewer ref="viewer" :dxfUrl="dxfUrl" :fonts="[mainFont, auxFont]"
-                       @dxf-loaded="_OnLoaded" @dxf-cleared="_OnCleared"/>
+                       @dxf-loaded="_OnLoaded" @dxf-cleared="_OnCleared" />
         </div>
         <div class="col-auto layersCol">
             <LayersList :layers="layers" @toggleLayer="_OnToggleLayer" @toggleAll="_OnToggleAll"/>

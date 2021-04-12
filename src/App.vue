@@ -25,7 +25,24 @@
         </q-toolbar>
     </q-header>
     <q-page-container>
-        <ViewerPage :dxfUrl="dxfUrl" />
+        <ViewerPage :dxfUrl="dxfUrl">
+            <div v-if="inputFile === null"
+                 class="centralUploader row justify-center items-center" >
+                <div class="col-auto" style="width: 300px;">
+                    <q-file filled bottom-slots clearable
+                            :value="inputFile" label="Select file"
+                            accept=".dxf"
+                            class="col" @input="_OnFileSelected" @clear="_OnFileCleared">
+                        <template v-slot:before>
+                            <q-icon name="folder_open" size="xl" />
+                        </template>
+                        <template v-slot:hint>
+                            <span>File is processed locally in your browser</span>
+                        </template>
+                    </q-file>
+                </div>
+            </div>
+        </ViewerPage>
     </q-page-container>
 
     <q-dialog v-model="aboutDialog">
@@ -99,6 +116,13 @@ export default {
 
 a.github:hover {
     text-decoration: none;
+}
+
+.centralUploader {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    z-index: 10;
 }
 
 </style>
