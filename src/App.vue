@@ -13,6 +13,9 @@
                 <template v-slot:hint>
                     <span class="text-white">File is processed locally in your browser</span>
                 </template>
+                <template v-slot:after>
+                    <q-btn dense flat label="URL" @click="urlDialog = true"/>
+                </template>
             </q-file>
             <q-btn icon="help" label="About" class="q-ml-lg" @click="aboutDialog = true"></q-btn>
             <q-space />
@@ -41,6 +44,9 @@
                         </template>
                     </q-file>
                 </div>
+                <div class="col-auto q-mx-lg q-pb-lg">
+                    <q-btn label="Load URL" @click="urlDialog = true"/>
+                </div>
             </div>
         </ViewerPage>
     </q-page-container>
@@ -56,6 +62,26 @@
             <q-card-section style="max-height: 50vh" class="scroll" v-html="aboutHtml" />
         </q-card>
     </q-dialog>
+
+    <q-dialog v-model="urlDialog">
+        <q-card>
+            <q-card-section class="row items-center q-pb-sm">
+                <div class="text-h6">Load URL</div>
+                <q-space />
+                <q-btn icon="close" flat round dense v-close-popup />
+            </q-card-section>
+            <q-separator />
+            <q-card-section>
+                <q-form @submit="_OnUrl" class="q-gutter-md" style="width: 400px;">
+                    <q-input filled v-model="inputUrl" label="Input URL here"
+                             hint="Find some examples" />
+                    <div>
+                        <q-btn label="Submit" type="submit" color="primary" v-close-popup />
+                    </div>
+                </q-form>
+            </q-card-section>
+        </q-card>
+    </q-dialog>
 </q-layout>
 </template>
 <script>
@@ -67,7 +93,10 @@ export default {
         return {
             dxfUrl: null,
             inputFile: null,
-            aboutDialog: false
+            isLocalFile: false,
+            aboutDialog: false,
+            urlDialog: false,
+            inputUrl: null
         }
     },
 
@@ -77,9 +106,10 @@ export default {
                 this._OnFileCleared()
                 return
             }
-            if (this.dxfUrl) {
+            if (this.dxfUrl && this.isLocalFile) {
                 URL.revokeObjectURL(this.dxfUrl)
             }
+            this.isLocalFile = true
             this.inputFile = file
             this.dxfUrl = URL.createObjectURL(file)
         },
@@ -94,6 +124,22 @@ export default {
                     message: "File cleared"
                 })
             }
+        },
+
+        _OnUrl() {
+            if (this.inputUrl === null) {
+                return
+            }
+            const url = this.inputUrl.trim()
+            if (this.url === "") {
+                return
+            }
+            if (this.dxfUrl && this.isLocalFile) {
+                URL.revokeObjectURL(this.dxfUrl)
+            }
+            this.isLocalFile = false
+            this.inputFile = new File(["remote_file"], url, { type: "text/plain" })
+            this.dxfUrl = url
         }
     },
 
