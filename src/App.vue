@@ -79,7 +79,7 @@
                 <q-form @submit="_OnUrl" class="q-gutter-md" style="width: 400px;">
                     <q-input filled v-model="inputUrl" label="Input URL here" bottom-slots>
                       <template v-slot:hint>
-                        <span>Uses <a href="https://github.com/Rob--W/cors-anywhere/">cors-anywhere</a> CORS proxy</span>
+                        <span>Uses <a href="https://github.com/Freeboard/thingproxy">thingproxy</a> CORS proxy</span>
                       </template>
                     </q-input>
                     <div>
@@ -146,7 +146,7 @@ export default {
             }
             this.isLocalFile = false
             this.inputFile = new File(["remote_file"], url, { type: "text/plain" })
-            this.dxfUrl = "https://cors-anywhere.herokuapp.com/" + url
+            this.dxfUrl = "https://thingproxy.freeboard.io/fetch/" + url
         }
     },
 
