@@ -72,9 +72,16 @@
             </q-card-section>
             <q-separator />
             <q-card-section>
+                <div class="q-mb-lg">
+                    <a href="https://startpage.com/sp/search?q=filetype:dxf"
+                       target="_blank">Find some examples</a>
+                </div>
                 <q-form @submit="_OnUrl" class="q-gutter-md" style="width: 400px;">
-                    <q-input filled v-model="inputUrl" label="Input URL here"
-                             hint="Find some examples" />
+                    <q-input filled v-model="inputUrl" label="Input URL here" bottom-slots>
+                      <template v-slot:hint>
+                        <span>Uses <a href="https://github.com/Rob--W/cors-anywhere/">cors-anywhere</a> CORS proxy</span>
+                      </template>
+                    </q-input>
                     <div>
                         <q-btn label="Submit" type="submit" color="primary" v-close-popup />
                     </div>
@@ -131,7 +138,7 @@ export default {
                 return
             }
             const url = this.inputUrl.trim()
-            if (this.url === "") {
+            if (url === "") {
                 return
             }
             if (this.dxfUrl && this.isLocalFile) {
@@ -139,7 +146,7 @@ export default {
             }
             this.isLocalFile = false
             this.inputFile = new File(["remote_file"], url, { type: "text/plain" })
-            this.dxfUrl = url
+            this.dxfUrl = "https://cors-anywhere.herokuapp.com/" + url
         }
     },
 
