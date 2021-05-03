@@ -73,7 +73,7 @@
             <q-separator />
             <q-card-section>
                 <div class="q-mb-lg">
-                    <a href="https://startpage.com/sp/search?q=filetype:dxf"
+                    <a href="https://startpage.com/sp/search?q=SECTION%20HEADER%20filetype:dxf"
                        target="_blank">Find some examples</a>
                 </div>
                 <q-form @submit="_OnUrl" class="q-gutter-md" style="width: 400px;">
