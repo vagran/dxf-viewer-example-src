@@ -2,7 +2,7 @@
     <q-page class="row items-stretch root">
         <div class="col relative-position">
             <slot></slot>
-            <DxfViewer ref="viewer" :dxfUrl="dxfUrl" :fonts="[mainFont, aux1Font, aux2Font]"
+            <DxfViewer ref="viewer" :dxfUrl="dxfUrl" :fonts="fonts"
                        @dxf-loaded="_OnLoaded" @dxf-cleared="_OnCleared" />
         </div>
         <div class="col-auto layersCol">
@@ -16,7 +16,8 @@ import DxfViewer from "@/components/DxfViewer"
 import Vue from "vue"
 import mainFont from "@/assets/fonts/Roboto-LightItalic.ttf"
 import aux1Font from "@/assets/fonts/NotoSansDisplay-SemiCondensedLightItalic.ttf"
-import aux2Font from "@/assets/fonts/NanumGothic-Regular.ttf"
+import aux2Font from "@/assets/fonts/HanaMinA.ttf"
+import aux3Font from "@/assets/fonts/NanumGothic-Regular.ttf"
 import LayersList from "@/components/LayersList"
 
 export default {
@@ -63,9 +64,7 @@ export default {
     },
 
     created() {
-        this.mainFont = mainFont
-        this.aux1Font = aux1Font
-        this.aux2Font = aux2Font
+        this.fonts = [mainFont, aux1Font, aux2Font, aux3Font]
     }
 }
 </script>
