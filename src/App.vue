@@ -4,7 +4,7 @@
         <q-toolbar>
             <q-toolbar-title :shrink="true" >DXF viewer</q-toolbar-title>
             <q-file color="white" label-color="white" filled bottom-slots clearable dense
-                    :value="inputFile" label="Select file" style="max-width: 300px;"
+                    :value="inputFile" label="Select file or drag here" style="max-width: 300px;"
                     accept=".dxf"
                     class="q-ml-xl" dark @input="_OnFileSelected" @clear="_OnFileCleared">
                 <template v-slot:before>
@@ -33,7 +33,7 @@
                  class="centralUploader row justify-center items-center" >
                 <div class="col-auto" style="width: 300px;">
                     <q-file filled bottom-slots clearable
-                            :value="inputFile" label="Select file"
+                            :value="inputFile" label="Select file or drag here"
                             accept=".dxf"
                             class="col" @input="_OnFileSelected" @clear="_OnFileCleared">
                         <template v-slot:before>
