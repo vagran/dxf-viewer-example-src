@@ -124,7 +124,7 @@ export default {
             this.dxfViewer.Subscribe(eventName, e => this.$emit("dxf-" + eventName, e))
         }
         for (const eventName of ["loaded", "cleared", "destroyed", "resized", "pointerdown",
-                                 "pointerup", "viewChanged"]) {
+                                 "pointerup", "viewChanged", "message"]) {
             Subscribe(eventName)
         }
     },
