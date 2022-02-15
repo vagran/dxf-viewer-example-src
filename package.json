@@ -8,8 +8,8 @@
         "vue": "^2.6.14",
         "quasar": "^1.16.0",
         "@quasar/extras": "^1.12.1",
-        "dxf-viewer": "^1.0.14",
-        "three": "^0.135.0"
+        "dxf-viewer": "^1.0.15",
+        "three": "^0.137.5"
     },
     "scripts": {
         "serve": "vue-cli-service serve --port 9001 --https",
