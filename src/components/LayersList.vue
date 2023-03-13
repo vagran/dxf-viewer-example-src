@@ -19,7 +19,7 @@
                 <q-checkbox :value="layer.isVisible" @input="e => _ToggleLayer(layer, e)"/>
             </q-item-section>
             <q-item-section>
-                <q-item-label>{{layer.name}}</q-item-label>
+                <q-item-label>{{layer.displayName}}</q-item-label>
             </q-item-section>
         </q-item>
     </q-list>
