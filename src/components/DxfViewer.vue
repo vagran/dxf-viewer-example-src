@@ -36,7 +36,10 @@ export default {
                 return {
                     clearColor: new three.Color("#fff"),
                     autoResize: true,
-                    colorCorrection: true
+                    colorCorrection: true,
+                    sceneOptions: {
+                        wireframeMesh: true
+                    }
                 }
             }
         }

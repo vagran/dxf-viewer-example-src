@@ -8,7 +8,7 @@
         "vue": "^2.6.14",
         "quasar": "^1.16.0",
         "@quasar/extras": "^1.12.1",
-        "dxf-viewer": "^1.0.22",
+        "dxf-viewer": "1.0.24",
         "three": "^0.150.1"
     },
     "scripts": {
