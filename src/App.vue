@@ -93,7 +93,14 @@
 </template>
 
 <script setup lang="ts">
+import { onMounted } from "vue"
+import { DxfViewer } from "dxf-viewer/dist/DxfViewer"
 
+//XXX
+onMounted(async () => {
+    await new DxfViewer().Load()
+    console.log("mounted")
+})
 
 // import ViewerPage from "@/components/ViewerPage";
 // export default {
