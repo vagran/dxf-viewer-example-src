@@ -2,9 +2,11 @@ import "quasar/dist/quasar.css"
 import "@quasar/extras/material-icons/material-icons.css"
 import "@quasar/extras/fontawesome-v5/fontawesome-v5.css"
 
-import Quasar, {
+import {
+    Quasar,
+    QuasarPluginOptions,
+
     Notify,
-    ClosePopup,
 
     QBtn,
     QCard,
@@ -35,7 +37,7 @@ import Quasar, {
     QToolbarTitle,
 } from "quasar"
 
-export default [Quasar, {
+const config: [typeof Quasar, Partial<QuasarPluginOptions>] =  [Quasar, {
     components: {
         QBtn,
         QCard,
@@ -66,7 +68,8 @@ export default [Quasar, {
         QToolbarTitle,
     },
     plugins: {
-        Notify,
-        ClosePopup
+        Notify
     }
 }]
+
+export default config

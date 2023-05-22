@@ -1,0 +1,8 @@
+{
+    "env": {
+        "nodeDir": "/opt/node-v18"
+    },
+    "cSpell.words": [
+        "fontawesome"
+    ]
+}

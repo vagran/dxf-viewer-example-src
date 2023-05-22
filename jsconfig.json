@@ -1,9 +1,0 @@
-{
-    "compilerOptions": {
-        "module": "esnext",
-        "target": "es2022"
-    },
-    "vueCompilerOptions": {
-        "target": 2
-    }
-}

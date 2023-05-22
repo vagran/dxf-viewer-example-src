@@ -8,24 +8,39 @@
             "type": "process",
             "command": "npm",
             "args": ["install"],
+            "options": {
+                "env": {
+                    "PATH": "${config:env.nodeDir}/bin:${env:PATH}"
+                }
+            }
         },
         {
             "label": "Serve",
             "type": "process",
             "command": "npm",
             "args": ["run", "serve"],
+            "options": {
+                "env": {
+                    "PATH": "${config:env.nodeDir}/bin:${env:PATH}"
+                }
+            }
         },
         {
             "label": "Build",
             "type": "process",
             "command": "npm",
-            "args": ["run", "build"]
+            "args": ["run", "build"],
+            "options": {
+                "env": {
+                    "PATH": "${config:env.nodeDir}/bin:${env:PATH}"
+                }
+            }
         },
-        {
-            "label": "Deploy",
-            "type": "process",
-            "command": "bash",
-            "args": ["${workspaceFolder}/deploy.sh"]
-        }
+        // {
+        //     "label": "Deploy",
+        //     "type": "process",
+        //     "command": "bash",
+        //     "args": ["${workspaceFolder}/deploy.sh"]
+        // }
     ]
 }
