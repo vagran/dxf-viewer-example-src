@@ -95,7 +95,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from "vue"
 import { useQuasar } from "quasar"
-import { DxfViewer } from "dxf-viewer/dist/DxfViewer"
+import { DxfViewer, DxfParser } from "dxf-viewer/dist/DxfViewer"
 
 //XXX
 onMounted(async () => {
@@ -204,7 +204,7 @@ function _OnFileCleared() {
     }
 }
 
-function _OnFileSelected(file: File | null) {
+async function _OnFileSelected(file: File | null) {
     console.log(file)//XXX
     if (!file) {
         _OnFileCleared()
@@ -215,6 +215,11 @@ function _OnFileSelected(file: File | null) {
     // }
     // this.isLocalFile = true
     inputFile.value = file
+
+    //XXX
+    const parser = new DxfParser()
+    await parser.FeedFile(file)
+    console.log("done")
 
     //XXX read in chunks
     //file.size
