@@ -3,21 +3,21 @@
     <q-header>
         <q-toolbar>
             <q-toolbar-title :shrink="true" >DXF viewer</q-toolbar-title>
-            <!-- <q-file color="white" label-color="white" filled bottom-slots clearable dense
-                    :value="inputFile" label="Select file or drag here" style="max-width: 300px;"
+            <q-file color="white" label-color="white" filled bottom-slots clearable dense
+                    :modelValue="inputFile" label="Select file or drag here" style="max-width: 300px;"
                     accept=".dxf"
-                    class="q-ml-xl" dark @input="_OnFileSelected" @clear="_OnFileCleared">
+                    class="q-ml-xl" dark @update:modelValue="_OnFileSelected" @clear="_OnFileCleared">
                 <template v-slot:before>
                     <q-icon name="folder_open" color="white" />
                 </template>
                 <template v-slot:hint>
                     <span class="text-white">File is processed locally in your browser</span>
                 </template>
-                <template v-slot:after>
+                <!-- <template v-slot:after>
                     <q-btn dense flat label="URL" @click="urlDialog = true"/>
-                </template>
-            </q-file> -->
-            <!-- <q-btn icon="help" label="About" class="q-ml-lg" @click="aboutDialog = true"></q-btn> -->
+                </template> -->
+            </q-file>
+            <q-btn icon="help" label="About" class="q-ml-lg" @click="aboutDialog = true"></q-btn>
             <q-space />
             <q-btn icon="fab fa-github" color="primary" label="dxf-viewer on GitHub" no-caps
                    class="q-mx-sm github" type="a"
@@ -51,7 +51,7 @@
         </ViewerPage> -->
     </q-page-container>
 
-    <!-- <q-dialog v-model="aboutDialog">
+    <q-dialog v-model="aboutDialog">
         <q-card>
             <q-card-section class="row items-center q-pb-sm">
                 <div class="text-h6">About</div>
@@ -61,7 +61,7 @@
             <q-separator />
             <q-card-section style="max-height: 50vh" class="scroll" v-html="aboutHtml" />
         </q-card>
-    </q-dialog> -->
+    </q-dialog>
 
     <!-- <q-dialog v-model="urlDialog">
         <q-card>
@@ -93,7 +93,8 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted } from "vue"
+import { ref, onMounted } from "vue"
+import { useQuasar } from "quasar"
 import { DxfViewer } from "dxf-viewer/dist/DxfViewer"
 
 //XXX
@@ -101,6 +102,8 @@ onMounted(async () => {
     await new DxfViewer().Load()
     console.log("mounted")
 })
+
+const $q = useQuasar()
 
 // import ViewerPage from "@/components/ViewerPage";
 // export default {
@@ -173,6 +176,53 @@ onMounted(async () => {
 //         }
 //     }
 // }
+
+const aboutHtml = ref<string>("")
+
+const aboutBlock = document.getElementById("about")!
+aboutHtml.value = aboutBlock.innerHTML
+aboutBlock.style.display = "none"
+/* For web crawler. */
+document.getElementById("noscript")!.innerText = aboutBlock.innerText
+
+const aboutDialog = ref(false)
+
+
+const inputFile = ref<File|null>()
+//XXX
+let dxfUrl: string | null = null
+
+function _OnFileCleared() {
+    if (inputFile.value) {
+        inputFile.value = null
+        // URL.revokeObjectURL(this.dxfUrl)
+        // this.dxfUrl = null
+        $q.notify({
+            type: "info",
+            message: "File cleared"
+        })
+    }
+}
+
+function _OnFileSelected(file: File | null) {
+    console.log(file)//XXX
+    if (!file) {
+        _OnFileCleared()
+        return
+    }
+    // if (this.dxfUrl && this.isLocalFile) {
+    //     URL.revokeObjectURL(this.dxfUrl)
+    // }
+    // this.isLocalFile = true
+    inputFile.value = file
+
+    //XXX read in chunks
+    //file.size
+    //file.slice(0, 100)
+    // FileReader.readAsArrayBuffer(chunk)
+
+    // this.dxfUrl = URL.createObjectURL(file)
+}
 
 </script>
 
