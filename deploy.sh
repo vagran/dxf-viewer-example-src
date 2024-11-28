@@ -1,5 +1,6 @@
 #!/bin/bash
 
+set -e
 cd dist || exit
 rm -rf .git
 git init

@@ -2,7 +2,13 @@
 <q-layout view="hHh lpr fff" data-nosnippet>
     <q-header>
         <q-toolbar>
-            <q-toolbar-title :shrink="true" >DXF viewer</q-toolbar-title>
+            <q-toolbar-title :shrink="true" >
+                DXF viewer
+                <a href="https://www.npmjs.com/package/dxf-viewer">
+                    <q-badge align="top" color="secondary">{{version}}</q-badge>
+                </a>
+            </q-toolbar-title>
+
             <q-file color="white" label-color="white" filled bottom-slots clearable dense
                     :value="inputFile" label="Select file or drag here" style="max-width: 300px;"
                     accept=".dxf"
@@ -98,6 +104,7 @@ export default {
 
     data() {
         return {
+            version: DXF_VIEWER_VERSION,
             dxfUrl: null,
             inputFile: null,
             isLocalFile: false,

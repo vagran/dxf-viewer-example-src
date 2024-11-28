@@ -6,6 +6,7 @@ import Quasar, {
     Notify,
     ClosePopup,
 
+    QBadge,
     QBtn,
     QCard,
     QCardSection,
@@ -37,6 +38,7 @@ import Quasar, {
 
 export default [Quasar, {
     components: {
+        QBadge,
         QBtn,
         QCard,
         QCardSection,
