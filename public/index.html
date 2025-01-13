@@ -28,7 +28,9 @@
         itself is DXF 2D viewer component written in JavaScript. It renders drawings using WebGL
         (via <a href="https://threejs.org/">three.js</a> library). It was carefully crafted with
         performance in mind, intended for drawing huge real-world files without performance
-        problems.
+        problems. You can use <tt>`dxfUrl`</tt> URL query parameter to initially fetch and show an
+        external DXF file (uses <a href="https://allorigins.win">allOrigins</a> external service to
+        overcome CORS restrictions).
     </main>
     <div id="app" v-cloak class="hasLoadingPlaceholder"></div>
     <noscript id="noscript">
