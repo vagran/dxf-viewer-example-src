@@ -148,6 +148,10 @@ export default {
             if (url === "") {
                 return
             }
+            this._SetExternalUrl(url)
+        },
+
+        _SetExternalUrl(url) {
             if (this.dxfUrl && this.isLocalFile) {
                 URL.revokeObjectURL(this.dxfUrl)
             }
@@ -164,6 +168,21 @@ export default {
         /* For web crawler. */
         document.getElementById("noscript").innerText = aboutBlock.innerText
     },
+
+    mounted() {
+        const dxfUrl = new URL(location.href).searchParams.get("dxfUrl")
+        if (dxfUrl?.length) {
+            if (!URL.canParse(dxfUrl)) {
+                this.$q.notify({
+                    type: "negative",
+                    message: "Bad URL specified"
+                })
+                return
+            }
+            this._SetExternalUrl(dxfUrl)
+        }
+    },
+
     destroyed() {
         if (this.dxfUrl) {
             URL.revokeObjectURL(this.dxfUrl)
