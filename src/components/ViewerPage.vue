@@ -39,7 +39,7 @@ export default {
 
     methods: {
         _OnLoaded() {
-            const layers = this.$refs.viewer.GetViewer().GetLayers()
+            const layers = this.$refs.viewer.GetViewer().GetLayers(true)
             layers.forEach(lyr => Vue.set(lyr, "isVisible", true))
             this.layers = layers
         },
