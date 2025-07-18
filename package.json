@@ -6,7 +6,7 @@
     "version": "1.0.0",
     "dependencies": {
         "@quasar/extras": "^1.12.1",
-        "dxf-viewer": "^1.0.42",
+        "dxf-viewer": "^1.0.43",
         "quasar": "^1.16.0",
         "three": "^0.161.0",
         "vue": "^2.6.14"
