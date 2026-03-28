@@ -6,7 +6,7 @@
     "version": "1.0.0",
     "dependencies": {
         "@quasar/extras": "^1.12.1",
-        "dxf-viewer": "^1.0.43",
+        "dxf-viewer": "^1.0.47",
         "quasar": "^1.16.0",
         "three": "^0.161.0",
         "vue": "^2.6.14"
@@ -16,12 +16,12 @@
         "build": "vue-cli-service build --modern"
     },
     "devDependencies": {
-        "@vue/cli-service": "^4.5.15",
         "@vue/cli-plugin-babel": "^4.5.15",
+        "@vue/cli-service": "^4.5.15",
         "@vue/compiler-dom": "^3.2.41",
-        "vue-template-compiler": "^2.6.14",
-        "less-loader": "^7.3.0",
         "less": "^4.1.2",
+        "less-loader": "^7.3.0",
+        "vue-template-compiler": "^2.6.14",
         "worker-loader": "^3.0.8"
     },
     "keywords": [
