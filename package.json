@@ -13,11 +13,11 @@
     },
     "scripts": {
         "serve": "vue-cli-service serve --port 9001",
-        "build": "vue-cli-service build --modern"
+        "build": "vue-cli-service build"
     },
     "devDependencies": {
-        "@vue/cli-plugin-babel": "^4.5.15",
-        "@vue/cli-service": "^4.5.15",
+        "@vue/cli-plugin-babel": "^5.0.9",
+        "@vue/cli-service": "^5.0.9",
         "@vue/compiler-dom": "^3.2.41",
         "less": "^4.1.2",
         "less-loader": "^7.3.0",
