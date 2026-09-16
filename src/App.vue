@@ -151,6 +151,23 @@ function _OnFileSelected(file) {
     isLocalFile = true
     inputFile.value = file
     dxfUrl.value = URL.createObjectURL(file)
+    _DropUrlParam()
+}
+
+/** Take `?dxfUrl=` out of the address bar once a local file is showing instead.
+ *
+ * A local file cannot survive a reload — its blob URL dies with the page — and under the dev
+ * server a reload is not hypothetical: saving a library file triggers one. Left in place, the
+ * parameter would quietly bring that other drawing back and leave you comparing the wrong thing.
+ * Gone, the tab comes back empty, which is at least what it says.
+ */
+function _DropUrlParam() {
+    const url = new URL(location.href)
+    if (!url.searchParams.has("dxfUrl")) {
+        return
+    }
+    url.searchParams.delete("dxfUrl")
+    history.replaceState(null, "", url)
 }
 
 function _OnFileCleared() {
@@ -158,6 +175,9 @@ function _OnFileCleared() {
         inputFile.value = null
         URL.revokeObjectURL(dxfUrl.value)
         dxfUrl.value = null
+        /* Nothing is showing now, so the address bar should not claim otherwise — and should not
+         * put a drawing back on screen at the next reload. */
+        _DropUrlParam()
         $q.notify({
             type: "info",
             message: "File cleared"
@@ -199,6 +219,21 @@ function _SetExternalUrl(url) {
     dxfUrl.value = _IsSameOrigin(url)
         ? url
         : "https://api.allorigins.win/raw?url=" + encodeURIComponent(url)
+    _SetUrlParam(url)
+}
+
+/** Put the drawing being shown into the address bar, as the URL it was asked for rather than the
+ * proxied one, so that reloading the tab shows the same drawing again — which is also what a
+ * library edit does under the dev server, and sharing the link then works as a bonus. Written with
+ * replaceState so the back button still leaves the page rather than walking a list of drawings.
+ */
+function _SetUrlParam(dxfUrl) {
+    const url = new URL(location.href)
+    if (url.searchParams.get("dxfUrl") === dxfUrl) {
+        return
+    }
+    url.searchParams.set("dxfUrl", dxfUrl)
+    history.replaceState(null, "", url)
 }
 
 onMounted(() => {

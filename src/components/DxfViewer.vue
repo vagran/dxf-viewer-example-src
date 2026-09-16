@@ -73,6 +73,64 @@ function UrlNumber(name, defValue) {
 
 /* One worker decision per page load, shared by Load() and the stats line. */
 const USE_WORKER = UrlFlag("worker", true)
+
+/* Marks that the Vite client is about to apply an update, so that the page which comes back can
+ * tell an update apart from a reload someone asked for. See IS_HOT_RELOAD. */
+const HOT_RELOAD_KEY = "dxfView:hotReload"
+/* A page coming back from an update is up within a second or two. An older mark is one nobody
+ * consumed — an update to a module this component never imports, say. */
+const HOT_RELOAD_MAX_AGE = 10000
+
+/** Whether this page came up because Vite applied an update rather than because someone opened or
+ * reloaded it. That is the one case where the view that was on screen should be put back instead
+ * of fitting the drawing — see the view-parking comment in <script setup>.
+ *
+ * Editing library code nearly always makes Vite reload the whole page rather than patch it in
+ * place: the worker imports the same modules, its graph has no HMR boundary to stop the update
+ * at, and once any page has started the worker the server knows it. So this cannot be answered
+ * from anything held in memory, `import.meta.hot.data` included — the page is gone. Whatever
+ * survives that reload survives a deliberate one too, hence the marker: the Vite client announces
+ * an update before applying it, and the announcement is written down and read back exactly once,
+ * here.
+ *
+ * False in a build, where `import.meta.hot` does not exist and nothing is ever remembered.
+ */
+const IS_HOT_RELOAD = (() => {
+    if (!import.meta.hot) {
+        return false
+    }
+    let mark
+    try {
+        mark = sessionStorage.getItem(HOT_RELOAD_KEY)
+        sessionStorage.removeItem(HOT_RELOAD_KEY)
+    } catch {
+        /* Private mode, or storage is blocked. Nothing is remembered, so nothing is restored. */
+        return false
+    }
+    /* Both kinds of update: a full reload for anything the worker also imports, an in-place patch
+     * for the rest — the second only needs the mark because the module re-evaluates and loses it
+     * either way.
+     */
+    for (const event of ["vite:beforeFullReload", "vite:beforeUpdate"]) {
+        import.meta.hot.on(event, () => {
+            try {
+                sessionStorage.setItem(HOT_RELOAD_KEY, String(Date.now()))
+            } catch {}
+        })
+    }
+    const at = Number(mark)
+    if (!mark || !Number.isFinite(at) || at <= 0) {
+        /* Opened, reloaded by hand, or a new tab. Fit, which is what the viewer does anyway. */
+        return false
+    }
+    const age = Date.now() - at
+    if (age >= HOT_RELOAD_MAX_AGE) {
+        console.log(`Hot reload mark is ${Math.round(age / 1000)} s old, so this page is not the ` +
+                    "one an update replaced: fitting the drawing rather than restoring the view.")
+        return false
+    }
+    return true
+})()
 </script>
 
 <script setup>
@@ -140,6 +198,11 @@ let phases = []
 let phaseStart = 0
 
 async function Load(url) {
+    if (saveViewTimer !== null) {
+        clearTimeout(saveViewTimer)
+        saveViewTimer = null
+        _SaveView()
+    }
     isLoading.value = true
     error.value = null
     stats.value = null
@@ -262,16 +325,26 @@ const warningsDetails = computed(
           (USE_WORKER ? "\n\nMain thread only — DxfScene warnings go to the worker's console. " +
                         "Reload with ?worker=0 for a complete count." : ""))
 
-/* Saved view state is keyed by drawing URL in sessionStorage: it survives a reload and a hot
- * update, stays per-tab — one tab per drawing being the intended workflow — and never leaks
- * between drawings. Stored in model space, so it does not depend on wherever DxfScene happened to
- * put the scene origin for this file. */
+/* The view is parked in sessionStorage — per tab, keyed by drawing URL, in model space so that it
+ * does not depend on wherever DxfScene happened to put the scene origin for this file. It has to
+ * outlive the page, because applying a library edit usually means reloading it (see
+ * IS_HOT_RELOAD), and nothing held in memory gets to see the other side of that.
+ *
+ * Outliving the page is also the whole difficulty: reading it back unconditionally is what made
+ * every load after the first skip the fit. So it is written whenever the view changes, and read
+ * back only when IS_HOT_RELOAD says this page is the continuation of the one that wrote it.
+ * Opening a drawing, reloading the tab and opening a second tab all fit the whole drawing.
+ *
+ * Dev server only: with no updates to survive there is nothing to remember.
+ */
+const REMEMBER_VIEW = Boolean(import.meta.hot)
+
 function _ViewKey() {
     return `dxfView:${props.dxfUrl}`
 }
 
 function _SaveView() {
-    if (dxfViewer === null || props.dxfUrl === null) {
+    if (!REMEMBER_VIEW || dxfViewer === null || props.dxfUrl === null) {
         return
     }
     const camera = dxfViewer.GetCamera()
@@ -282,7 +355,12 @@ function _SaveView() {
     const view = {
         x: camera.position.x + origin.x,
         y: camera.position.y + origin.y,
-        width: camera.right - camera.left
+        /* SetView() sizes the frustum and pins zoom at 1, but OrbitControls zooms by changing
+         * `zoom` alone and never touches the frustum — so what is on screen is the one divided by
+         * the other. Reading `right - left` by itself records the width of the last SetView(),
+         * i.e. the fit, and throws away every zoom made since.
+         */
+        width: (camera.right - camera.left) / camera.zoom
     }
     try {
         sessionStorage.setItem(_ViewKey(), JSON.stringify(view))
@@ -291,10 +369,21 @@ function _SaveView() {
     }
 }
 
+/** Put the camera back where the page this one replaces left it, when that is what this load is.
+ * Otherwise do nothing and the fit done by Load() stands.
+ */
+/* IS_HOT_RELOAD is a fact about the page, but the restore is a one-off: it belongs to the load
+ * that replaces what the update interrupted, and to nothing after it. Left armed it makes every
+ * later load in the same page restore too — pick another drawing from the file dialog and it comes
+ * up wearing whatever camera is stored under its name instead of being fitted.
+ */
+let restorePending = IS_HOT_RELOAD
+
 function _RestoreView() {
-    if (props.dxfUrl === null) {
+    if (!restorePending || props.dxfUrl === null) {
         return
     }
+    restorePending = false
     let view
     try {
         view = JSON.parse(sessionStorage.getItem(_ViewKey()))
@@ -307,7 +396,12 @@ function _RestoreView() {
     }
     const origin = dxfViewer.GetOrigin()
     dxfViewer.SetView({x: view.x - origin.x, y: view.y - origin.y}, view.width)
+    /* Says which of the two things happened, since a restored view and a fitted one are only
+     * distinguishable by eye when you remember where you were looking. */
+    console.log(`View restored across the update: x=${view.x.toFixed(2)}, y=${view.y.toFixed(2)},`,
+                `width=${view.width.toFixed(2)}.`)
 }
+
 
 /* "viewChanged" fires for every frame of a pan or zoom, so the write is coalesced. The camera is
  * read when the timer fires rather than when it is scheduled, which is also what lets the fit
@@ -315,7 +409,12 @@ function _RestoreView() {
 let saveViewTimer = null
 
 function _OnViewChanged() {
-    if (saveViewTimer !== null) {
+    /* Load() clears the viewer first, and Clear() parks the camera at the origin with a width of
+     * 2 — a state the drawing is never seen in, but one that emits "viewChanged" like any other
+     * and, on a viewer that already holds a scene, passes _SaveView()'s guards. Without this the
+     * drawing being opened gets that camera written under its name.
+     */
+    if (isLoading.value || saveViewTimer !== null) {
         return
     }
     saveViewTimer = setTimeout(() => {
@@ -377,13 +476,32 @@ onMounted(() => {
     for (const eventName of VIEWER_EVENTS) {
         Subscribe(eventName)
     }
-    dxfViewer.Subscribe("viewChanged", _OnViewChanged)
+    if (REMEMBER_VIEW) {
+        dxfViewer.Subscribe("viewChanged", _OnViewChanged)
+    }
+    /* For the updates Vite does patch in place rather than reload the page for: they unmount and
+     * re-create this component, destroying the viewer and the drawing it held, while the URL prop
+     * stays as it was — so the watcher above never fires and nothing would load the drawing
+     * again. Fetching it here is what leaves an updated drawing on screen instead of an empty
+     * canvas.
+     *
+     * On a normal startup this is a no-op: the child mounts before the parent, so App has not yet
+     * read `?dxfUrl=` and the prop is still null.
+     */
+    if (props.dxfUrl !== null) {
+        Load(props.dxfUrl)
+    }
 })
 
 onUnmounted(() => {
     if (saveViewTimer !== null) {
+        /* An in-place update unmounts us, possibly within milliseconds of the pan that scheduled
+         * this, so flush it rather than dropping it — otherwise the view that comes back is one
+         * debounce stale. (A reloading page never gets here, but it has had seconds to settle.)
+         */
         clearTimeout(saveViewTimer)
         saveViewTimer = null
+        _SaveView()
     }
     dxfViewer.Destroy()
     dxfViewer = null
