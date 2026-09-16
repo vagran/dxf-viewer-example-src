@@ -8,7 +8,7 @@
                     <q-badge align="top" color="secondary">{{version}}</q-badge>
                 </a>
                 <q-badge v-if="libraryIsLinked" align="top" color="warning" class="q-ml-xs"
-                         :title="`dxf-viewer resolved through npm link: ${libraryDir}`">
+                         :title="libraryTitle">
                     linked{{libraryRev === null ? "" : ` ${libraryRev}`}}
                 </q-badge>
             </q-toolbar-title>
@@ -116,7 +116,12 @@ const version = DXF_VIEWER_VERSION
  */
 const libraryIsLinked = DXF_VIEWER_LINKED
 const libraryRev = DXF_VIEWER_REV
+/* Null in a build: the path is only meaningful on the machine that has the working copy, and a
+ * build is published. See the DXF_VIEWER_DIR define in vite.config.js. */
 const libraryDir = DXF_VIEWER_DIR
+const libraryTitle = libraryDir === null
+    ? "dxf-viewer bundled from a working copy rather than from npm"
+    : `dxf-viewer resolved through npm link: ${libraryDir}`
 const dxfUrl = ref(null)
 const inputFile = ref(null)
 const aboutDialog = ref(false)

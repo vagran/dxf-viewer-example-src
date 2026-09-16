@@ -14,8 +14,8 @@ InstallDiagnostics()
  */
 console.log(`DXF viewer version: ${DXF_VIEWER_VERSION}` +
             (DXF_VIEWER_LINKED
-                ? ` (npm link -> ${DXF_VIEWER_DIR}${DXF_VIEWER_REV === null
-                    ? "" : `, ${DXF_VIEWER_REV}`})`
+                ? ` (npm link${DXF_VIEWER_DIR === null ? "" : ` -> ${DXF_VIEWER_DIR}`}` +
+                  `${DXF_VIEWER_REV === null ? "" : `, ${DXF_VIEWER_REV}`})`
                 : " (from npm)"))
 
 createApp(App)

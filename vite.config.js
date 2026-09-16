@@ -170,17 +170,85 @@ function RenderListing(dirPath, relPath) {
 </html>`
 }
 
-/* Keyed on `mode`, not `command`: `vite preview` runs with command === "serve" but mode
- * "production", and it has to serve under the same base the build baked into index.html. */
-export default defineConfig(({ mode }) => ({
-    base: mode === "production" ? "/dxf-viewer-example/" : "/",
+/** The sites this project is published to. `mode` picks one; any other mode -- the dev server --
+ * serves from the root.
+ *
+ * Two of them, because a release is previewed publicly before it is published: `production` is the
+ * stable site built against the package from npm, `rc` is an unreleased working copy on a separate
+ * GitHub Pages site. They must stay separate deployments rather than one site with two paths,
+ * since deploy.sh force-pushes dist/ as the target repository's entire tree.
+ *
+ * `indexed` says whether this is the site search engines should find. Only one deployment can be,
+ * so the other drops the sitemap, asks not to be crawled, and leaves the analytics property to the
+ * stable site -- see DeploymentAssets().
+ */
+const DEPLOYMENTS = {
+    production: {repo: "dxf-viewer-example", indexed: true},
+    rc:         {repo: "dxf-viewer-example-preview", indexed: false}
+}
+
+/** The base path a deployment is served under, or "/" for the dev server.
+ *
+ * A GitHub Pages project site lives at https://<user>.github.io/<repo>/, so the repository name is
+ * the base path; deriving one from the other is what stops them drifting apart, which matters
+ * because deploy.sh decides where a bundle may be pushed by reading the base back out of it.
+ */
+function DeploymentBase(deployment) {
+    return deployment === undefined ? "/" : `/${deployment.repo}/`
+}
+
+/** Everything that differs between deployments once the bundle itself is built.
+ *
+ * Both halves exist because `public/` is copied verbatim into every build and `index.html` is
+ * shared, so a second deployment inherits assets written for the first one.
+ */
+function DeploymentAssets(deployment) {
+    /* The dev server never reaches this plugin (`apply: "build"`), so an unknown mode -- which is
+     * nothing anyone deploys -- is treated as the indexed site and left alone. */
+    const indexed = deployment === undefined || deployment.indexed
+    let outDir
+    return {
+        name: "dxf-deployment-assets",
+        apply: "build",
+
+        configResolved(config) {
+            outDir = path.resolve(config.root, config.build.outDir)
+        },
+
+        transformIndexHtml(html) {
+            if (indexed) {
+                return html
+            }
+            /* One analytics property is shared by both sites, and a preview reporting into it
+             * would contaminate the stable site's statistics with traffic that is mostly mine. */
+            return html.replace(/[ \t]*<!-- analytics -->[\s\S]*?<!-- \/analytics -->\n?/, "")
+        },
+
+        closeBundle() {
+            if (indexed) {
+                return
+            }
+            /* public/sitemap.xml names the stable site by absolute URL, so shipping it here would
+             * point crawlers at the other deployment. Drop it and ask not to be indexed at all:
+             * two near-identical sites is exactly the duplicate content that gets both demoted. */
+            fs.rmSync(path.join(outDir, "sitemap.xml"), {force: true})
+            fs.writeFileSync(path.join(outDir, "robots.txt"), "User-agent: *\nDisallow: /\n")
+        }
+    }
+}
+
+/* Keyed on `mode`, not `command`: `vite preview` runs with command === "serve" but the mode of the
+ * build it is serving, and it has to serve under the same base that build baked into index.html. */
+export default defineConfig(({ command, mode }) => ({
+    base: DeploymentBase(DEPLOYMENTS[mode]),
 
     plugins: [
         /* transformAssetUrls teaches the Vue compiler which Quasar component props hold asset
          * URLs, so they are rewritten and hashed like any other import. */
         vue({ template: { transformAssetUrls } }),
         quasar(),
-        TestDataPlugin(GetTestDataDir())
+        TestDataPlugin(GetTestDataDir()),
+        DeploymentAssets(DEPLOYMENTS[mode])
     ],
 
     resolve: {
@@ -209,7 +277,10 @@ export default defineConfig(({ mode }) => ({
         "DXF_VIEWER_VERSION": JSON.stringify(dxfViewerPackageJson.version),
         "DXF_VIEWER_LINKED": JSON.stringify(library.isLinked),
         "DXF_VIEWER_REV": JSON.stringify(library.rev),
-        "DXF_VIEWER_DIR": JSON.stringify(library.dir)
+        /* Only ever useful on the dev server, where it says which working copy the page is
+         * exercising. A build is published, so the path is someone's home directory on a public
+         * site; the `linked` badge and the revision carry the part that is worth keeping. */
+        "DXF_VIEWER_DIR": JSON.stringify(command === "build" ? null : library.dir)
     },
 
     build: {

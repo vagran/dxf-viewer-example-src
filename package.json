@@ -15,7 +15,9 @@
     "scripts": {
         "serve": "vite --port 9001",
         "build": "vite build",
-        "preview": "vite preview --port 9001"
+        "build:rc": "vite build --mode rc",
+        "preview": "vite preview --port 9001",
+        "preview:rc": "vite preview --mode rc --port 9001"
     },
     "devDependencies": {
         "@quasar/vite-plugin": "^2.0.2",

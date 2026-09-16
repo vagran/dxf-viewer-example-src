@@ -22,10 +22,22 @@
             "args": ["run", "build"]
         },
         {
+            "label": "Build (release preview)",
+            "type": "process",
+            "command": "npm",
+            "args": ["run", "build:rc"]
+        },
+        {
             "label": "Deploy",
             "type": "process",
             "command": "bash",
             "args": ["${workspaceFolder}/deploy.sh"]
+        },
+        {
+            "label": "Deploy (release preview)",
+            "type": "process",
+            "command": "bash",
+            "args": ["${workspaceFolder}/deploy.sh", "--rc"]
         }
     ]
 }
