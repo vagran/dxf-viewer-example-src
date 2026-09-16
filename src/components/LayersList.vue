@@ -30,52 +30,44 @@
 
 </template>
 
-<script>
+<script setup>
 
-export default {
-    name: "LayersList",
+import { ref, watch } from "vue"
 
-    emits: ["toggleLayer", "toggleAll"],
-
-    props: {
-        layers: {
-            /* Expecting array of {name: string, color: number, isVisible: boolean} */
-            type: Array,
-            default: null
-        }
-    },
-
-    watch: {
-        layers() {
-            this.showAll = null
-        }
-    },
-
-    data() {
-        return {
-            showAll: null
-        }
-    },
-
-    methods: {
-        _ToggleLayer(layer, newState) {
-            this.$emit("toggleLayer", layer, newState)
-            this.showAll = null
-        },
-
-        _ToggleAll(newState) {
-            this.showAll = newState
-            this.$emit("toggleAll", newState)
-        },
-
-        _GetCssColor(value) {
-            let s = value.toString(16)
-            while (s.length < 6) {
-                s = "0" + s
-            }
-            return "#" + s
-        }
+const props = defineProps({
+    layers: {
+        /* Expecting array of {name: string, color: number, isVisible: boolean} */
+        type: Array,
+        default: null
     }
+})
+
+const emit = defineEmits(["toggleLayer", "toggleAll"])
+
+const showAll = ref(null)
+
+/* Shallow, like the options-API watcher it replaces: it fires when a new layer list arrives, not
+ * when a visibility flag inside the current one is flipped. */
+watch(() => props.layers, () => {
+    showAll.value = null
+})
+
+function _ToggleLayer(layer, newState) {
+    emit("toggleLayer", layer, newState)
+    showAll.value = null
+}
+
+function _ToggleAll(newState) {
+    showAll.value = newState
+    emit("toggleAll", newState)
+}
+
+function _GetCssColor(value) {
+    let s = value.toString(16)
+    while (s.length < 6) {
+        s = "0" + s
+    }
+    return "#" + s
 }
 
 </script>

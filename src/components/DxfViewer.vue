@@ -12,138 +12,147 @@
 </template>
 
 <script>
+/** All DxfViewer supported events (see DxfViewer.Subscribe()). Each is re-emitted by this
+ * component prefixed with "dxf-".
+ *
+ * This lives in a companion plain <script> because defineEmits() is hoisted out of setup() and
+ * so may not reference anything declared inside <script setup>; the compiler rejects it outright.
+ * A plain <script> alongside <script setup> is evaluated once at module scope, which is exactly
+ * what is needed here. */
+const VIEWER_EVENTS = ["loaded", "cleared", "destroyed", "resized", "pointerdown", "pointerup",
+                       "viewChanged", "message"]
+</script>
+
+<script setup>
+import { ref, useTemplateRef, watch, onMounted, onUnmounted } from "vue"
 import {DxfViewer} from "dxf-viewer"
 import * as three from "three"
 
-/** All DxfViewer supported events (see DxfViewer.Subscribe()). Each is re-emitted by this
- * component prefixed with "dxf-". */
-const VIEWER_EVENTS = ["loaded", "cleared", "destroyed", "resized", "pointerdown", "pointerup",
-                       "viewChanged", "message"]
-
-export default {
-    name: "DxfViewer",
-
-    /* Declared so that the listeners the parent binds do not also fall through onto the
-     * container div as native DOM listeners. */
-    emits: VIEWER_EVENTS.map(name => "dxf-" + name),
-
-    props: {
-        dxfUrl: {
-            default: null
-        },
-        /** List of font URLs. Files should have TTF format. Fonts are used in the specified order,
-         * each one is checked until necessary glyph is found. Text is not rendered if fonts are not
-         * specified.
-         */
-        fonts: {
-            default: null
-        },
-        options: {
-            default() {
-                return {
-                    clearColor: new three.Color("#fff"),
-                    autoResize: true,
-                    colorCorrection: true,
-                    sceneOptions: {
-                        wireframeMesh: true
-                    }
+const props = defineProps({
+    dxfUrl: {
+        default: null
+    },
+    /** List of font URLs. Files should have TTF format. Fonts are used in the specified order,
+     * each one is checked until necessary glyph is found. Text is not rendered if fonts are not
+     * specified.
+     */
+    fonts: {
+        default: null
+    },
+    options: {
+        default() {
+            return {
+                clearColor: new three.Color("#fff"),
+                autoResize: true,
+                colorCorrection: true,
+                sceneOptions: {
+                    wireframeMesh: true
                 }
             }
         }
-    },
+    }
+})
 
-    data() {
-        return {
-            isLoading: false,
-            progress: null,
-            progressText: null,
-            curProgressPhase: null,
-            error: null
-        }
-    },
+/* Declared so that the listeners the parent binds do not also fall through onto the
+ * container div as native DOM listeners. */
+const emit = defineEmits(VIEWER_EVENTS.map(name => "dxf-" + name))
 
-    watch: {
-        async dxfUrl(dxfUrl) {
-            if (dxfUrl !== null) {
-                await this.Load(dxfUrl)
-            } else {
-                this.dxfViewer.Clear()
-                this.error = null
-                this.isLoading = false
-                this.progress = null
-            }
-        }
-    },
+const canvasContainer = useTemplateRef("canvasContainer")
 
-    methods: {
-        async Load(url) {
-            this.isLoading = true
-            this.error = null
-            try {
-                await this.dxfViewer.Load({
-                    url,
-                    fonts: this.fonts,
-                    progressCbk: this._OnProgress.bind(this),
-                    workerFactory: () => new Worker(
-                        new URL("./DxfViewerWorker.js", import.meta.url), {type: "module"})
-                })
-            } catch (error) {
-                console.warn(error)
-                this.error = error.toString()
-            } finally {
-                this.isLoading = false
-                this.progressText = null
-                this.progress = null
-                this.curProgressPhase = null
-            }
-        },
+const isLoading = ref(false)
+const progress = ref(null)
+const progressText = ref(null)
+const error = ref(null)
 
-        /** @return {DxfViewer} */
-        GetViewer() {
-            return this.dxfViewer
-        },
+/* Deliberately plain bindings rather than refs. `curProgressPhase` is only ever compared against,
+ * and `dxfViewer` owns the three.js scene — wrapping that in a ref would hand out a reactive
+ * proxy of the whole scene graph. Under the options API both were undeclared properties stashed
+ * on the instance, which landed on the non-reactive `ctx` and so behaved the same way, but only
+ * by accident; here it is a stated choice. */
+let curProgressPhase = null
+let dxfViewer = null
 
-        _OnProgress(phase, size, totalSize) {
-            if (phase !== this.curProgressPhase) {
-                switch(phase) {
-                case "font":
-                    this.progressText = "Fetching fonts..."
-                    break
-                case "fetch":
-                    this.progressText = "Fetching file..."
-                    break
-                case "parse":
-                    this.progressText = "Parsing file..."
-                    break
-                case "prepare":
-                    this.progressText = "Preparing rendering data..."
-                    break
-                }
-                this.curProgressPhase = phase
-            }
-            if (totalSize === null) {
-                this.progress = -1
-            } else {
-                this.progress = size / totalSize
-            }
-        }
-    },
-
-    mounted() {
-        this.dxfViewer = new DxfViewer(this.$refs.canvasContainer, this.options)
-        const Subscribe = eventName => {
-            this.dxfViewer.Subscribe(eventName, e => this.$emit("dxf-" + eventName, e))
-        }
-        for (const eventName of VIEWER_EVENTS) {
-            Subscribe(eventName)
-        }
-    },
-
-    unmounted() {
-        this.dxfViewer.Destroy()
-        this.dxfViewer = null
+async function Load(url) {
+    isLoading.value = true
+    error.value = null
+    try {
+        await dxfViewer.Load({
+            url,
+            fonts: props.fonts,
+            progressCbk: _OnProgress,
+            workerFactory: () => new Worker(
+                new URL("./DxfViewerWorker.js", import.meta.url), {type: "module"})
+        })
+    } catch (e) {
+        console.warn(e)
+        error.value = e.toString()
+    } finally {
+        isLoading.value = false
+        progressText.value = null
+        progress.value = null
+        curProgressPhase = null
     }
 }
+
+/** @return {DxfViewer} */
+function GetViewer() {
+    return dxfViewer
+}
+
+function _OnProgress(phase, size, totalSize) {
+    if (phase !== curProgressPhase) {
+        switch(phase) {
+        case "font":
+            progressText.value = "Fetching fonts..."
+            break
+        case "fetch":
+            progressText.value = "Fetching file..."
+            break
+        case "parse":
+            progressText.value = "Parsing file..."
+            break
+        case "prepare":
+            progressText.value = "Preparing rendering data..."
+            break
+        }
+        curProgressPhase = phase
+    }
+    if (totalSize === null) {
+        progress.value = -1
+    } else {
+        progress.value = size / totalSize
+    }
+}
+
+watch(() => props.dxfUrl, async dxfUrl => {
+    if (dxfUrl !== null) {
+        await Load(dxfUrl)
+    } else {
+        dxfViewer.Clear()
+        error.value = null
+        isLoading.value = false
+        progress.value = null
+    }
+})
+
+onMounted(() => {
+    dxfViewer = new DxfViewer(canvasContainer.value, props.options)
+    const Subscribe = eventName => {
+        dxfViewer.Subscribe(eventName, e => emit("dxf-" + eventName, e))
+    }
+    for (const eventName of VIEWER_EVENTS) {
+        Subscribe(eventName)
+    }
+})
+
+onUnmounted(() => {
+    dxfViewer.Destroy()
+    dxfViewer = null
+})
+
+/* A <script setup> component is closed by default; ViewerPage reaches GetViewer() through a
+ * template ref, so it has to be published explicitly. */
+defineExpose({Load, GetViewer})
 </script>
 
 <style scoped lang="less">

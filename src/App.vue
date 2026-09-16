@@ -97,98 +97,98 @@
     </q-dialog>
 </q-layout>
 </template>
-<script>
-import ViewerPage from "@/components/ViewerPage.vue";
-export default {
-    components: {ViewerPage},
 
-    data() {
-        return {
-            version: DXF_VIEWER_VERSION,
-            dxfUrl: null,
-            inputFile: null,
-            isLocalFile: false,
-            aboutDialog: false,
-            urlDialog: false,
-            inputUrl: null
-        }
-    },
+<script setup>
+import { ref, onMounted, onUnmounted } from "vue"
+import { useQuasar } from "quasar"
+import ViewerPage from "@/components/ViewerPage.vue"
 
-    methods: {
-        _OnFileSelected(file) {
-            if (!file) {
-                this._OnFileCleared()
-                return
-            }
-            if (this.dxfUrl && this.isLocalFile) {
-                URL.revokeObjectURL(this.dxfUrl)
-            }
-            this.isLocalFile = true
-            this.inputFile = file
-            this.dxfUrl = URL.createObjectURL(file)
-        },
+const $q = useQuasar()
 
-        _OnFileCleared() {
-            if (this.inputFile) {
-                this.inputFile = null
-                URL.revokeObjectURL(this.dxfUrl)
-                this.dxfUrl = null
-                this.$q.notify({
-                    type: "info",
-                    message: "File cleared"
-                })
-            }
-        },
+const version = DXF_VIEWER_VERSION
+const dxfUrl = ref(null)
+const inputFile = ref(null)
+const aboutDialog = ref(false)
+const urlDialog = ref(false)
+const inputUrl = ref(null)
 
-        _OnUrl() {
-            if (this.inputUrl === null) {
-                return
-            }
-            const url = this.inputUrl.trim()
-            if (url === "") {
-                return
-            }
-            this._SetExternalUrl(url)
-        },
+/* Read back by the handlers below but never rendered, so it stays out of reactive state. */
+let isLocalFile = false
 
-        _SetExternalUrl(url) {
-            if (this.dxfUrl && this.isLocalFile) {
-                URL.revokeObjectURL(this.dxfUrl)
-            }
-            this.isLocalFile = false
-            this.inputFile = new File(["remote_file"], url, { type: "text/plain" })
-            this.dxfUrl = "https://api.allorigins.win/raw?url=" + encodeURIComponent(url)
-        }
-    },
+/* The setup body runs where created() used to. The About copy is authored as static markup in
+ * index.html so that crawlers see it without running the app; lift it into the dialog and hide
+ * the original. */
+const aboutBlock = document.getElementById("about")
+const aboutHtml = aboutBlock.innerHTML
+aboutBlock.style.display = "none"
+/* For web crawler. */
+document.getElementById("noscript").innerText = aboutBlock.innerText
 
-    created() {
-        const aboutBlock = document.getElementById("about")
-        this.aboutHtml = aboutBlock.innerHTML
-        aboutBlock.style.display = "none"
-        /* For web crawler. */
-        document.getElementById("noscript").innerText = aboutBlock.innerText
-    },
+function _OnFileSelected(file) {
+    if (!file) {
+        _OnFileCleared()
+        return
+    }
+    if (dxfUrl.value && isLocalFile) {
+        URL.revokeObjectURL(dxfUrl.value)
+    }
+    isLocalFile = true
+    inputFile.value = file
+    dxfUrl.value = URL.createObjectURL(file)
+}
 
-    mounted() {
-        const dxfUrl = new URL(location.href).searchParams.get("dxfUrl")
-        if (dxfUrl?.length) {
-            if (!URL.canParse(dxfUrl)) {
-                this.$q.notify({
-                    type: "negative",
-                    message: "Bad URL specified"
-                })
-                return
-            }
-            this._SetExternalUrl(dxfUrl)
-        }
-    },
-
-    unmounted() {
-        if (this.dxfUrl) {
-            URL.revokeObjectURL(this.dxfUrl)
-        }
+function _OnFileCleared() {
+    if (inputFile.value) {
+        inputFile.value = null
+        URL.revokeObjectURL(dxfUrl.value)
+        dxfUrl.value = null
+        $q.notify({
+            type: "info",
+            message: "File cleared"
+        })
     }
 }
+
+function _OnUrl() {
+    if (inputUrl.value === null) {
+        return
+    }
+    const url = inputUrl.value.trim()
+    if (url === "") {
+        return
+    }
+    _SetExternalUrl(url)
+}
+
+function _SetExternalUrl(url) {
+    if (dxfUrl.value && isLocalFile) {
+        URL.revokeObjectURL(dxfUrl.value)
+    }
+    isLocalFile = false
+    inputFile.value = new File(["remote_file"], url, { type: "text/plain" })
+    dxfUrl.value = "https://api.allorigins.win/raw?url=" + encodeURIComponent(url)
+}
+
+onMounted(() => {
+    /* Named `url`, not `dxfUrl`, so it does not shadow the ref of that name. */
+    const url = new URL(location.href).searchParams.get("dxfUrl")
+    if (url?.length) {
+        if (!URL.canParse(url)) {
+            $q.notify({
+                type: "negative",
+                message: "Bad URL specified"
+            })
+            return
+        }
+        _SetExternalUrl(url)
+    }
+})
+
+onUnmounted(() => {
+    if (dxfUrl.value) {
+        URL.revokeObjectURL(dxfUrl.value)
+    }
+})
 </script>
 
 <style scoped lang="less">
