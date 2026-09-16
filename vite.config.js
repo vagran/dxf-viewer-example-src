@@ -1,5 +1,8 @@
 import { fileURLToPath, URL } from "node:url"
 import { createRequire } from "node:module"
+import { execFileSync } from "node:child_process"
+import fs from "node:fs"
+import path from "node:path"
 
 import { defineConfig } from "vite"
 import vue from "@vitejs/plugin-vue"
@@ -7,6 +10,161 @@ import { quasar, transformAssetUrls } from "@quasar/vite-plugin"
 
 const require = createRequire(import.meta.url)
 const dxfViewerPackageJson = require("dxf-viewer/package.json")
+
+/** Where the `dxf-viewer` import actually resolves, and whether that is a working copy reached
+ * through `npm link` or an ordinary install from the registry. Node resolves symlinks during
+ * resolution, so a linked package reports its real path, which lies outside this project's
+ * `node_modules`.
+ *
+ * This exists because the two are otherwise indistinguishable from the running page: the version
+ * badge reads the resolved package's `package.json`, and a working copy usually carries the same
+ * version as the last publish. `npm install` here quietly replaces the link with the registry
+ * tarball, and nothing says so.
+ *
+ * @return {{dir: string, isLinked: boolean, rev: ?string}}
+ */
+function GetLibraryInfo() {
+    const dir = path.dirname(require.resolve("dxf-viewer/package.json"))
+    const isLinked = !dir.startsWith(path.resolve("node_modules") + path.sep)
+    let rev = null
+    if (isLinked) {
+        try {
+            rev = execFileSync("git", ["-C", dir, "describe", "--always", "--dirty"],
+                               {encoding: "utf8", stdio: ["ignore", "pipe", "ignore"]}).trim()
+        } catch {
+            /* Not a git checkout, or no git on PATH. The link itself is still worth reporting. */
+        }
+    }
+    return {dir, isLinked, rev}
+}
+
+const library = GetLibraryInfo()
+
+/* Mount point of the test data tree, and the prefix `?dxfUrl=` values are written against. */
+const TEST_DATA_URL_PREFIX = "/test-data"
+
+/** The library keeps its sample drawings in `test-data/`, gitignored and local. When the library
+ * is linked that is the working copy's own directory; otherwise fall back to a sibling checkout,
+ * since an installed package carries no test data. */
+function GetTestDataDir() {
+    const linkedDir = path.join(library.dir, "test-data")
+    if (fs.existsSync(linkedDir)) {
+        return linkedDir
+    }
+    return fileURLToPath(new URL("../dxf-viewer/test-data", import.meta.url))
+}
+
+/** Expose the library's `test-data/` tree over the dev server.
+ *
+ * The point is to make a drawing addressable. `?dxfUrl=/test-data/city.dxf` survives a reload and
+ * an HMR update, so a change can be re-checked by refreshing the tab; the file input cannot, since
+ * it is cleared every time the component remounts. Browsing to /test-data/ lists the tree, with
+ * links that open each drawing in the viewer.
+ *
+ * Dev only (`apply: "serve"`) — nothing here reaches a production build, which is why this is a
+ * middleware rather than a symlink under `public/`.
+ */
+function TestDataPlugin(rootDir) {
+    return {
+        name: "dxf-test-data",
+        apply: "serve",
+
+        configureServer(server) {
+            if (!fs.existsSync(rootDir)) {
+                server.config.logger.warn(
+                    `[dxf-test-data] not serving ${TEST_DATA_URL_PREFIX}/, no such directory: ` +
+                    rootDir)
+                return
+            }
+            server.config.logger.info(`[dxf-test-data] ${TEST_DATA_URL_PREFIX}/ -> ${rootDir}`)
+
+            server.middlewares.use(TEST_DATA_URL_PREFIX, (req, res, next) => {
+                /* connect has stripped the mount prefix from req.url, but the query string is
+                 * still there; parsing against a dummy base is the cheapest way to drop it. */
+                const relPath = decodeURIComponent(new URL(req.url, "http://localhost").pathname)
+                const filePath = path.join(rootDir, relPath)
+                /* path.join() has already collapsed any "..", so this rejects traversal out of the
+                 * tree. Symlinks *inside* it (test-data/sample-files) are followed on purpose —
+                 * this server is local and reaching that data is the whole point. */
+                if (filePath !== rootDir && !filePath.startsWith(rootDir + path.sep)) {
+                    res.statusCode = 403
+                    res.end("Forbidden")
+                    return
+                }
+
+                let stat
+                try {
+                    stat = fs.statSync(filePath)
+                } catch {
+                    /* Hand back to Vite, which answers with its own 404. */
+                    next()
+                    return
+                }
+
+                if (stat.isDirectory()) {
+                    res.setHeader("Content-Type", "text/html; charset=utf-8")
+                    res.end(RenderListing(filePath, relPath))
+                    return
+                }
+
+                res.setHeader("Content-Type", "application/octet-stream")
+                /* DxfFetcher drives the progress bar from Content-Length. */
+                res.setHeader("Content-Length", stat.size)
+                /* A test harness should never leave you wondering whether the drawing on screen
+                 * came from the cache. */
+                res.setHeader("Cache-Control", "no-store")
+                fs.createReadStream(filePath).pipe(res)
+            })
+        }
+    }
+}
+
+/** Directory index for the test data tree. Files link into the viewer rather than to themselves,
+ * so a drawing is one click from the listing. */
+function RenderListing(dirPath, relPath) {
+    const entries = []
+    for (const name of fs.readdirSync(dirPath)) {
+        if (name.startsWith(".")) {
+            continue
+        }
+        let isDir
+        try {
+            /* statSync rather than withFileTypes: `test-data/sample-files` is a symlink to a
+             * directory and has to be listed as one. */
+            isDir = fs.statSync(path.join(dirPath, name)).isDirectory()
+        } catch {
+            /* Broken symlink. */
+            continue
+        }
+        entries.push({name, isDir})
+    }
+    entries.sort((a, b) => (b.isDir - a.isDir) || a.name.localeCompare(b.name))
+
+    const base = path.posix.join(TEST_DATA_URL_PREFIX, relPath)
+    const rows = entries.map(({name, isDir}) => {
+        const entryPath = path.posix.join(base, name)
+        if (isDir) {
+            return `<li><a href="${entryPath}">${name}/</a></li>`
+        }
+        /* Only plain DXF is linked into the viewer. The directory also holds screenshots and
+         * xz-compressed drawings, which the viewer cannot read; listing them unlinked beats
+         * offering a click that fails. */
+        if (!name.toLowerCase().endsWith(".dxf")) {
+            return `<li>${name}</li>`
+        }
+        return `<li><a href="/?dxfUrl=${encodeURIComponent(entryPath)}">${name}</a></li>`
+    })
+    const parent = relPath === "/" ? "" : `<li><a href="${path.posix.dirname(base)}">../</a></li>`
+
+    return `<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><title>${base}</title></head>
+<body style="font-family: monospace;">
+<h3>${base}</h3>
+<ul>${parent}${rows.join("")}</ul>
+</body>
+</html>`
+}
 
 /* Keyed on `mode`, not `command`: `vite preview` runs with command === "serve" but mode
  * "production", and it has to serve under the same base the build baked into index.html. */
@@ -17,7 +175,8 @@ export default defineConfig(({ mode }) => ({
         /* transformAssetUrls teaches the Vue compiler which Quasar component props hold asset
          * URLs, so they are rewritten and hashed like any other import. */
         vue({ template: { transformAssetUrls } }),
-        quasar()
+        quasar(),
+        TestDataPlugin(GetTestDataDir())
     ],
 
     resolve: {
@@ -40,8 +199,13 @@ export default defineConfig(({ mode }) => ({
         format: "es"
     },
 
+    /* All snapshots taken when the config is loaded: re-linking, or committing, needs a dev server
+     * restart before they catch up. Vite restarts itself only when this file changes. */
     define: {
-        "DXF_VIEWER_VERSION": JSON.stringify(dxfViewerPackageJson.version)
+        "DXF_VIEWER_VERSION": JSON.stringify(dxfViewerPackageJson.version),
+        "DXF_VIEWER_LINKED": JSON.stringify(library.isLinked),
+        "DXF_VIEWER_REV": JSON.stringify(library.rev),
+        "DXF_VIEWER_DIR": JSON.stringify(library.dir)
     },
 
     build: {

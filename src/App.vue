@@ -7,6 +7,10 @@
                 <a href="https://www.npmjs.com/package/dxf-viewer">
                     <q-badge align="top" color="secondary">{{version}}</q-badge>
                 </a>
+                <q-badge v-if="libraryIsLinked" align="top" color="warning" class="q-ml-xs"
+                         :title="`dxf-viewer resolved through npm link: ${libraryDir}`">
+                    linked{{libraryRev === null ? "" : ` ${libraryRev}`}}
+                </q-badge>
             </q-toolbar-title>
 
             <q-file color="white" label-color="white" filled bottom-slots clearable dense
@@ -106,6 +110,13 @@ import ViewerPage from "@/components/ViewerPage.vue"
 const $q = useQuasar()
 
 const version = DXF_VIEWER_VERSION
+/* Whether the page is exercising a working copy reached through `npm link` or the published
+ * package — see GetLibraryInfo() in vite.config.js. Constants, not state; they are fixed when the
+ * dev server loads its config.
+ */
+const libraryIsLinked = DXF_VIEWER_LINKED
+const libraryRev = DXF_VIEWER_REV
+const libraryDir = DXF_VIEWER_DIR
 const dxfUrl = ref(null)
 const inputFile = ref(null)
 const aboutDialog = ref(false)
@@ -160,20 +171,38 @@ function _OnUrl() {
     _SetExternalUrl(url)
 }
 
+/** Same-origin URLs are fetched directly; the CORS proxy is only there to reach foreign hosts.
+ * This is what makes `?dxfUrl=/test-data/city.dxf` work against the dev server — the proxy cannot
+ * see localhost, so routing everything through it would break the local case.
+ *
+ * @param url {string} Absolute, or relative to the current page.
+ */
+function _IsSameOrigin(url) {
+    if (!URL.canParse(url)) {
+        /* Relative, so it resolves against this page and is same-origin by construction. */
+        return true
+    }
+    return new URL(url).origin === location.origin
+}
+
 function _SetExternalUrl(url) {
     if (dxfUrl.value && isLocalFile) {
         URL.revokeObjectURL(dxfUrl.value)
     }
     isLocalFile = false
     inputFile.value = new File(["remote_file"], url, { type: "text/plain" })
-    dxfUrl.value = "https://api.allorigins.win/raw?url=" + encodeURIComponent(url)
+    dxfUrl.value = _IsSameOrigin(url)
+        ? url
+        : "https://api.allorigins.win/raw?url=" + encodeURIComponent(url)
 }
 
 onMounted(() => {
     /* Named `url`, not `dxfUrl`, so it does not shadow the ref of that name. */
     const url = new URL(location.href).searchParams.get("dxfUrl")
     if (url?.length) {
-        if (!URL.canParse(url)) {
+        /* Relative URLs are accepted, so `?dxfUrl=/test-data/city.dxf` addresses the tree the dev
+         * server exposes; the base makes canParse() judge those the same way the browser will. */
+        if (!URL.canParse(url, location.href)) {
             $q.notify({
                 type: "negative",
                 message: "Bad URL specified"

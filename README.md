@@ -5,10 +5,12 @@ written using [Quasar](https://quasar.dev/) framework for fancy UI.
 
 See demo here: https://vagran.github.io/dxf-viewer-example/
 
-The demo accepts `dxfUrl` query parameter in the page URL, so it can initially fetch and show
-external DXF file. However, keep in mind that this functionality relies on external service
-([allOrigins](https://allorigins.win)) to overcome CORS restrictions, which sometimes happens to
-fail file fetching.
-
 Run `npm run build` to build the distribution.
 Run `npm run serve` to run development server.
+
+## Loading a file by URL
+
+The page accepts a `dxfUrl` query parameter, so it can fetch and show a DXF file on startup.
+A URL on another host is fetched through the [allOrigins](https://allorigins.win) CORS proxy, which
+sometimes happens to fail; a same-origin URL, including a relative one such as
+`?dxfUrl=/test-data/city.dxf`, is fetched directly.
