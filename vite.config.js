@@ -96,8 +96,12 @@ function TestDataPlugin(rootDir) {
                 try {
                     stat = fs.statSync(filePath)
                 } catch {
-                    /* Hand back to Vite, which answers with its own 404. */
-                    next()
+                    /* Answer here rather than calling next(): Vite's SPA fallback would serve
+                     * index.html with a 200, and the viewer would report a parse error on HTML
+                     * instead of saying that the path is wrong. Mistyping a drawing name in a
+                     * hand-written URL is the single likeliest mistake in this workflow. */
+                    res.statusCode = 404
+                    res.end(`No such file under ${TEST_DATA_URL_PREFIX}/: ${relPath}`)
                     return
                 }
 

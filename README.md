@@ -13,4 +13,4 @@ Run `npm run serve` to run development server.
 The page accepts a `dxfUrl` query parameter, so it can fetch and show a DXF file on startup.
 A URL on another host is fetched through the [allOrigins](https://allorigins.win) CORS proxy, which
 sometimes happens to fail; a same-origin URL, including a relative one such as
-`?dxfUrl=/test-data/city.dxf`, is fetched directly.
+`?dxfUrl=/drawings/site-plan.dxf`, is fetched directly.

@@ -3,7 +3,11 @@ import { Quasar } from "quasar"
 
 import App from "@/App.vue"
 import quasarConfig from "@/Quasar"
+import { InstallDiagnostics } from "@/diagnostics.js"
 import "@/assets/styles/global.less"
+
+/* Before anything can warn. */
+InstallDiagnostics()
 
 /* Says which dxf-viewer the page is actually running, since a linked working copy and the
  * published package usually carry the same version number.
