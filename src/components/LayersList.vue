@@ -3,25 +3,28 @@
 <q-scroll-area class="root">
     <q-list dense>
         <q-item-label header>Layers</q-item-label>
-        <q-item v-if="layers !== null" tag="label">
-            <q-item-section side top>
-                <q-checkbox :value="showAll" @input="_ToggleAll"/>
-            </q-item-section>
-            <q-item-section>
-                <q-item-label class="text-italic">All layers</q-item-label>
-            </q-item-section>
-        </q-item>
-        <q-item v-if="layers !== null" v-for="layer in layers" :key="layer.name" tag="label">
-            <q-item-section side class="q-pa-none">
-                <q-icon name="label" :style="{color: _GetCssColor(layer.color)}" />
-            </q-item-section>
-            <q-item-section side top>
-                <q-checkbox :value="layer.isVisible" @input="e => _ToggleLayer(layer, e)"/>
-            </q-item-section>
-            <q-item-section>
-                <q-item-label>{{layer.displayName}}</q-item-label>
-            </q-item-section>
-        </q-item>
+        <template v-if="layers !== null">
+            <q-item tag="label">
+                <q-item-section side top>
+                    <q-checkbox :model-value="showAll" @update:model-value="_ToggleAll"/>
+                </q-item-section>
+                <q-item-section>
+                    <q-item-label class="text-italic">All layers</q-item-label>
+                </q-item-section>
+            </q-item>
+            <q-item v-for="layer in layers" :key="layer.name" tag="label">
+                <q-item-section side class="q-pa-none">
+                    <q-icon name="label" :style="{color: _GetCssColor(layer.color)}" />
+                </q-item-section>
+                <q-item-section side top>
+                    <q-checkbox :model-value="layer.isVisible"
+                                @update:model-value="e => _ToggleLayer(layer, e)"/>
+                </q-item-section>
+                <q-item-section>
+                    <q-item-label>{{layer.displayName}}</q-item-label>
+                </q-item-section>
+            </q-item>
+        </template>
     </q-list>
 </q-scroll-area>
 
@@ -31,6 +34,8 @@
 
 export default {
     name: "LayersList",
+
+    emits: ["toggleLayer", "toggleAll"],
 
     props: {
         layers: {

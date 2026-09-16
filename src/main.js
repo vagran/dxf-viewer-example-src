@@ -1,13 +1,12 @@
-import Vue from "vue"
-import App from "@/App"
-import "@/assets/styles/global.less"
+import { createApp } from "vue"
+import { Quasar } from "quasar"
 
+import App from "@/App.vue"
 import quasarConfig from "@/Quasar"
-Vue.use(...quasarConfig)
+import "@/assets/styles/global.less"
 
 console.log(`DXF viewer version: ${DXF_VIEWER_VERSION}`);
 
-new Vue({
-    el: "#app",
-    render: h => h(App)
-})
+createApp(App)
+    .use(Quasar, quasarConfig)
+    .mount("#app")

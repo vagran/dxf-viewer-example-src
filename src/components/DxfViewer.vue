@@ -14,11 +14,18 @@
 <script>
 import {DxfViewer} from "dxf-viewer"
 import * as three from "three"
-import DxfViewerWorker from "worker-loader!./DxfViewerWorker"
 
-/** Events: all DxfViewer supported events (see DxfViewer.Subscribe()), prefixed with "dxf-". */
+/** All DxfViewer supported events (see DxfViewer.Subscribe()). Each is re-emitted by this
+ * component prefixed with "dxf-". */
+const VIEWER_EVENTS = ["loaded", "cleared", "destroyed", "resized", "pointerdown", "pointerup",
+                       "viewChanged", "message"]
+
 export default {
     name: "DxfViewer",
+
+    /* Declared so that the listeners the parent binds do not also fall through onto the
+     * container div as native DOM listeners. */
+    emits: VIEWER_EVENTS.map(name => "dxf-" + name),
 
     props: {
         dxfUrl: {
@@ -77,7 +84,8 @@ export default {
                     url,
                     fonts: this.fonts,
                     progressCbk: this._OnProgress.bind(this),
-                    workerFactory: DxfViewerWorker
+                    workerFactory: () => new Worker(
+                        new URL("./DxfViewerWorker.js", import.meta.url), {type: "module"})
                 })
             } catch (error) {
                 console.warn(error)
@@ -126,13 +134,12 @@ export default {
         const Subscribe = eventName => {
             this.dxfViewer.Subscribe(eventName, e => this.$emit("dxf-" + eventName, e))
         }
-        for (const eventName of ["loaded", "cleared", "destroyed", "resized", "pointerdown",
-                                 "pointerup", "viewChanged", "message"]) {
+        for (const eventName of VIEWER_EVENTS) {
             Subscribe(eventName)
         }
     },
 
-    destroyed() {
+    unmounted() {
         this.dxfViewer.Destroy()
         this.dxfViewer = null
     }

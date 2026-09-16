@@ -1,74 +1,15 @@
-import "quasar/dist/quasar.css"
+/* Styles, icon fonts and the Quasar plugins used by this application.
+ *
+ * Components and directives are deliberately absent: @quasar/vite-plugin scans the templates and
+ * auto-imports exactly what they use, which is what the explicit registration list here used to do
+ * by hand under Quasar 1. */
+
 import "@quasar/extras/material-icons/material-icons.css"
-import "@quasar/extras/fontawesome-v5/fontawesome-v5.css"
+import "@quasar/extras/fontawesome-v7/fontawesome-v7.css"
+import "quasar/src/css/index.sass"
 
-import Quasar, {
-    Notify,
-    ClosePopup,
+import { Notify } from "quasar"
 
-    QBadge,
-    QBtn,
-    QCard,
-    QCardSection,
-    QCheckbox,
-    QDialog,
-    QFile,
-    QFooter,
-    QForm,
-    QHeader,
-    QIcon,
-    QInnerLoading,
-    QInput,
-    QItem,
-    QItemLabel,
-    QItemSection,
-    QLayout,
-    QLinearProgress,
-    QList,
-    QPage,
-    QPageContainer,
-    QScrollArea,
-    QSeparator,
-    QSpace,
-    QSpinner,
-    QToggle,
-    QToolbar,
-    QToolbarTitle,
-} from "quasar"
-
-export default [Quasar, {
-    components: {
-        QBadge,
-        QBtn,
-        QCard,
-        QCardSection,
-        QCheckbox,
-        QDialog,
-        QFile,
-        QFooter,
-        QForm,
-        QHeader,
-        QIcon,
-        QInnerLoading,
-        QInput,
-        QItem,
-        QItemLabel,
-        QItemSection,
-        QLayout,
-        QLinearProgress,
-        QList,
-        QPage,
-        QPageContainer,
-        QScrollArea,
-        QSeparator,
-        QSpace,
-        QSpinner,
-        QToggle,
-        QToolbar,
-        QToolbarTitle,
-    },
-    plugins: {
-        Notify,
-        ClosePopup
-    }
-}]
+export default {
+    plugins: { Notify }
+}

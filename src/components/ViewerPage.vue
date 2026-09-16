@@ -12,14 +12,13 @@
 </template>
 
 <script>
-import DxfViewer from "@/components/DxfViewer"
+import DxfViewer from "@/components/DxfViewer.vue"
 import {DxfViewer as _DxfViewer} from "dxf-viewer"
-import Vue from "vue"
 import mainFont from "@/assets/fonts/Roboto-LightItalic.ttf"
 import aux1Font from "@/assets/fonts/NotoSansDisplay-SemiCondensedLightItalic.ttf"
 import aux2Font from "@/assets/fonts/HanaMinA.ttf"
 import aux3Font from "@/assets/fonts/NanumGothic-Regular.ttf"
-import LayersList from "@/components/LayersList"
+import LayersList from "@/components/LayersList.vue"
 
 export default {
     name: "ViewerPage",
@@ -40,7 +39,7 @@ export default {
     methods: {
         _OnLoaded() {
             const layers = this.$refs.viewer.GetViewer().GetLayers(true)
-            layers.forEach(lyr => Vue.set(lyr, "isVisible", true))
+            layers.forEach(lyr => lyr.isVisible = true)
             this.layers = layers
         },
 

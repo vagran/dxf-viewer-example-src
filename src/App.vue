@@ -10,9 +10,9 @@
             </q-toolbar-title>
 
             <q-file color="white" label-color="white" filled bottom-slots clearable dense
-                    :value="inputFile" label="Select file or drag here" style="max-width: 300px;"
-                    accept=".dxf"
-                    class="q-ml-xl" dark @input="_OnFileSelected" @clear="_OnFileCleared">
+                    :model-value="inputFile" label="Select file or drag here"
+                    style="max-width: 300px;" accept=".dxf" class="q-ml-xl" dark
+                    @update:model-value="_OnFileSelected" @clear="_OnFileCleared">
                 <template v-slot:before>
                     <q-icon name="folder_open" color="white" />
                 </template>
@@ -25,10 +25,10 @@
             </q-file>
             <q-btn icon="help" label="About" class="q-ml-lg" @click="aboutDialog = true"></q-btn>
             <q-space />
-            <q-btn icon="fab fa-github" color="primary" label="dxf-viewer on GitHub" no-caps
+            <q-btn icon="fa-brands fa-github" color="primary" label="dxf-viewer on GitHub" no-caps
                    class="q-mx-sm github" type="a"
                    href="https://github.com/vagran/dxf-viewer" />
-            <q-btn icon="fab fa-github" color="primary" label="This example on GitHub" no-caps
+            <q-btn icon="fa-brands fa-github" color="primary" label="This example on GitHub" no-caps
                    class="q-mx-sm github" type="a"
                    href="https://github.com/vagran/dxf-viewer-example-src" />
         </q-toolbar>
@@ -39,9 +39,9 @@
                  class="centralUploader row justify-center items-center" >
                 <div class="col-auto" style="width: 300px;">
                     <q-file filled bottom-slots clearable
-                            :value="inputFile" label="Select file or drag here"
-                            accept=".dxf"
-                            class="col" @input="_OnFileSelected" @clear="_OnFileCleared">
+                            :model-value="inputFile" label="Select file or drag here"
+                            accept=".dxf" class="col"
+                            @update:model-value="_OnFileSelected" @clear="_OnFileCleared">
                         <template v-slot:before>
                             <q-icon name="folder_open" size="xl" />
                         </template>
@@ -98,7 +98,7 @@
 </q-layout>
 </template>
 <script>
-import ViewerPage from "@/components/ViewerPage";
+import ViewerPage from "@/components/ViewerPage.vue";
 export default {
     components: {ViewerPage},
 
@@ -183,7 +183,7 @@ export default {
         }
     },
 
-    destroyed() {
+    unmounted() {
         if (this.dxfUrl) {
             URL.revokeObjectURL(this.dxfUrl)
         }

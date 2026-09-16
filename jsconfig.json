@@ -1,9 +1,13 @@
 {
     "compilerOptions": {
         "module": "esnext",
-        "target": "es2022"
+        "target": "es2022",
+        "baseUrl": ".",
+        "paths": {
+            "@/*": ["src/*"]
+        }
     },
     "vueCompilerOptions": {
-        "target": 2
+        "target": 3
     }
 }
