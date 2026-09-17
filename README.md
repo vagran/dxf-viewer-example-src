@@ -1,4 +1,4 @@
-# dxf-viewer example
+# dxf-viewer example [![CI](https://github.com/vagran/dxf-viewer-example-src/actions/workflows/ci.yml/badge.svg)](https://github.com/vagran/dxf-viewer-example-src/actions/workflows/ci.yml)
 
 This is example of [dxf-viewer](https://github.com/vagran/dxf-viewer) package application. It is
 written using [Quasar](https://quasar.dev/) framework for fancy UI.

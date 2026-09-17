@@ -1,0 +1,85 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+# There is nothing to unit-test here -- this project is a UI over a library that carries its own
+# test suite, and everything it does that is worth checking happens in a browser. So CI gates the
+# one thing it can gate without one: that the bundle builds, and that the bundle it produces is fit
+# to be published. deploy.sh replaces a GitHub Pages site's entire tree with a force-push and
+# leaves no previous version to roll back to, which makes "wrong bundle" a broken public site.
+
+jobs:
+  build:
+    name: build (node ${{ matrix.node }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node: ["22", "24"]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+      # Also the only check that package-lock.json still matches package.json: npm ci fails when
+      # they disagree, where npm install would quietly rewrite the lockfile instead.
+      - run: npm ci
+      - run: npm run build
+      - name: Check the stable bundle
+        run: |
+          set -eu
+          # The same base path deploy.sh reads back out of the markup before it agrees to push.
+          # Keyed on mode rather than command, and easy to break from vite.config.js.
+          if ! grep -q '"/dxf-viewer-example/assets/' dist/index.html; then
+              echo "index.html was not built for /dxf-viewer-example/" >&2
+              exit 1
+          fi
+          # This is the indexed deployment, so it keeps what DeploymentAssets() strips from the
+          # other one. public/ is copied verbatim, so the sitemap arriving is not in question --
+          # that it is still here after the build is.
+          test -f dist/sitemap.xml
+          grep -q googletagmanager dist/index.html
+          test ! -e dist/robots.txt
+          # DXF_VIEWER_DIR names a directory on the building machine and is defined as null for a
+          # build precisely so it cannot reach a published site. Nothing else in the bundle has
+          # any business naming a path from this checkout either.
+          if grep -rlF "$PWD" dist/assets; then
+              echo "the files above leak a build-machine path into the bundle" >&2
+              exit 1
+          fi
+
+  release-preview:
+    name: release preview build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+          cache: npm
+      - run: npm ci
+      - run: npm run build:rc
+      # The preview site is built from the same sources and differs only in what happens after the
+      # bundle exists, which is the part no one looks at: a preview that indexes itself or reports
+      # into the stable site's analytics property costs the stable site its search ranking and its
+      # statistics, and does it silently.
+      - name: Check the preview bundle
+        run: |
+          set -eu
+          if ! grep -q '"/dxf-viewer-example-preview/assets/' dist/index.html; then
+              echo "index.html was not built for /dxf-viewer-example-preview/" >&2
+              exit 1
+          fi
+          # sitemap.xml names the stable site by absolute URL, so it is removed rather than
+          # rewritten, and the preview asks not to be crawled at all.
+          test ! -e dist/sitemap.xml
+          grep -q '^Disallow: /$' dist/robots.txt
+          # The analytics block is fenced by comments in index.html and stripped through that seam.
+          if grep -q googletagmanager dist/index.html; then
+              echo "analytics survived into the preview build" >&2
+              exit 1
+          fi
