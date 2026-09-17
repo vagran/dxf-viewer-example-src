@@ -284,6 +284,12 @@ export default defineConfig(({ command, mode }) => ({
     },
 
     build: {
-        outDir: "dist"
+        outDir: "dist",
+
+        /* The app bundle and the worker bundle are each ~1.3-1.5 MB minified, and both are mostly
+         * three.js plus opentype.js — a viewer cannot defer either, so the default 500 kB hint has
+         * nothing actionable behind it. Raised rather than silenced, so a bundle that grows well
+         * past what the library explains still says so. */
+        chunkSizeWarningLimit: 2000
     }
 }))
