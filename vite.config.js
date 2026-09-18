@@ -56,7 +56,8 @@ function GetTestDataDir() {
 
 /** Expose the library's `test-data/` tree over the dev server.
  *
- * The point is to make a drawing addressable. `?dxfUrl=/test-data/city.dxf` survives a reload and
+ * The point is to make a drawing addressable.
+ * `?dxfUrl=/test-data/selected-samples/enterprise/city.dxf` survives a reload and
  * an HMR update, so a change can be re-checked by refreshing the tab; the file input cannot, since
  * it is cleared every time the component remounts. Browsing to /test-data/ lists the tree, with
  * links that open each drawing in the viewer.
@@ -134,7 +135,9 @@ function RenderListing(dirPath, relPath) {
         let isDir
         try {
             /* statSync rather than withFileTypes: `test-data/sample-files` is a symlink to a
-             * directory and has to be listed as one. */
+             * directory and has to be listed as one, and every entry of
+             * `test-data/selected-samples` is a symlink to a file. withFileTypes reports both as
+             * neither file nor directory, which would empty that listing entirely. */
             isDir = fs.statSync(path.join(dirPath, name)).isDirectory()
         } catch {
             /* Broken symlink. */

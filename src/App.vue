@@ -197,7 +197,8 @@ function _OnUrl() {
 }
 
 /** Same-origin URLs are fetched directly; the CORS proxy is only there to reach foreign hosts.
- * This is what makes `?dxfUrl=/test-data/city.dxf` work against the dev server — the proxy cannot
+ * This is what makes `?dxfUrl=/test-data/selected-samples/enterprise/city.dxf` work against the
+ * dev server — the proxy cannot
  * see localhost, so routing everything through it would break the local case.
  *
  * @param url {string} Absolute, or relative to the current page.
@@ -240,7 +241,8 @@ onMounted(() => {
     /* Named `url`, not `dxfUrl`, so it does not shadow the ref of that name. */
     const url = new URL(location.href).searchParams.get("dxfUrl")
     if (url?.length) {
-        /* Relative URLs are accepted, so `?dxfUrl=/test-data/city.dxf` addresses the tree the dev
+        /* Relative URLs are accepted, so `?dxfUrl=/test-data/selected-samples/enterprise/city.dxf`
+         * addresses the tree the dev
          * server exposes; the base makes canParse() judge those the same way the browser will. */
         if (!URL.canParse(url, location.href)) {
             $q.notify({
