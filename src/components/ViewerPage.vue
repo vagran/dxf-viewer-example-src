@@ -12,7 +12,7 @@
 </template>
 
 <script setup>
-import { ref, useTemplateRef } from "vue"
+import { ref, useTemplateRef, watch } from "vue"
 import { useQuasar } from "quasar"
 import DxfViewer from "@/components/DxfViewer.vue"
 import {DxfViewer as _DxfViewer} from "dxf-viewer"
@@ -62,6 +62,29 @@ function _OnToggleAll(newState) {
     }
 }
 
+/* Layer swatch colors come from GetLayers(), which applies the same contrast correction as the
+ * canvas, so a theme switch changes them and they have to be read again. The colors are updated in
+ * place rather than by replacing the list: LayersList resets its "all layers" checkbox whenever a
+ * new list arrives, and a theme switch is not a new list of layers. `flush: "post"` keeps this
+ * behind the child's own watcher, which is what changes the background the colors are corrected
+ * against.
+ */
+watch(() => $q.dark.isActive, _RefreshLayerColors, {flush: "post"})
+
+function _RefreshLayerColors() {
+    const api = viewer.value?.GetViewer()
+    if (layers.value === null || !api) {
+        return
+    }
+    const colors = new Map(api.GetLayers(true).map(lyr => [lyr.name, lyr.color]))
+    for (const lyr of layers.value) {
+        const color = colors.get(lyr.name)
+        if (color !== undefined && color !== lyr.color) {
+            lyr.color = color
+        }
+    }
+}
+
 function _OnMessage(e) {
     let type = "info"
     switch (e.detail.level) {
@@ -82,6 +105,12 @@ function _OnMessage(e) {
     .layersCol {
         border-left: #DBDBDB solid 1px;
     }
+}
+
+/* Global for the same reason as in DxfViewer.vue: the ancestor carrying the theme is <body>, and
+ * the whole selector has to go inside one :global(). */
+:global(body.body--dark .root .layersCol) {
+    border-left-color: #4a4a4a;
 }
 
 </style>

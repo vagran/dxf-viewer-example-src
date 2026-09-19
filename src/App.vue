@@ -29,6 +29,10 @@
             </q-file>
             <q-btn icon="help" label="About" class="q-ml-lg" @click="aboutDialog = true"></q-btn>
             <q-space />
+            <q-btn dense flat round :icon="isDark ? 'light_mode' : 'dark_mode'" class="q-mx-sm"
+                   @click="_ToggleTheme">
+                <q-tooltip>Switch to {{isDark ? "light" : "dark"}} theme</q-tooltip>
+            </q-btn>
             <q-btn icon="fa-brands fa-github" color="primary" label="dxf-viewer on GitHub" no-caps
                    class="q-mx-sm github" type="a"
                    href="https://github.com/vagran/dxf-viewer" />
@@ -105,11 +109,49 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from "vue"
+import { ref, computed, onMounted, onUnmounted } from "vue"
 import { useQuasar } from "quasar"
 import ViewerPage from "@/components/ViewerPage.vue"
 
 const $q = useQuasar()
+
+/* Dark/light theme. Quasar's Dark plugin is reactive - `$q.dark.isActive` drives both the UI and
+ * the canvas background in DxfViewer.vue - but it does not remember the choice between page loads,
+ * so the preference is kept in localStorage. `?theme=dark|light` overrides the stored preference
+ * for one load; the toggle still works and persists, and a reload comes back to the URL's value. */
+const THEME_KEY = "dxfView:theme"
+
+/** The theme to start the page with: true, false, or "auto" (the system preference). */
+function _InitialTheme() {
+    const urlTheme = new URL(location.href).searchParams.get("theme")
+    if (urlTheme === "dark" || urlTheme === "light") {
+        return urlTheme === "dark"
+    }
+    try {
+        const saved = localStorage.getItem(THEME_KEY)
+        if (saved === "dark" || saved === "light") {
+            return saved === "dark"
+        }
+    } catch {
+        /* Private mode, or storage is blocked. Fall through to the system preference. */
+    }
+    return "auto"
+}
+
+/* Set in the parent's setup, which runs before the child components are created: DxfViewer reads
+ * the active theme when it applies the canvas background. */
+$q.dark.set(_InitialTheme())
+
+const isDark = computed(() => $q.dark.isActive)
+
+function _ToggleTheme() {
+    $q.dark.toggle()
+    try {
+        localStorage.setItem(THEME_KEY, $q.dark.isActive ? "dark" : "light")
+    } catch {
+        /* The theme still applies to this page, it just will not be remembered. */
+    }
+}
 
 const version = DXF_VIEWER_VERSION
 /* Whether the page is exercising a working copy reached through `npm link` or the published

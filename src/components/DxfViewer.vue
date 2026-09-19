@@ -54,9 +54,12 @@ const urlParams = new URL(location.href).searchParams
  *   ?blackWhiteInversion=0  do not invert pure black/white against the background
  *   ?wireframe=0            fill hatches and solids instead of drawing them as wireframe
  *   ?antialias=0
- *   ?clearColor=<css>       e.g. `black`, `#222`. Exercises the inversion/correction paths
+ *   ?clearColor=<css>       e.g. `black`, `#222`. Exercises the inversion/correction paths. Pins
+ *                           the canvas background, so the theme toggle leaves it alone
  *   ?pointSize=<px>
  *   ?stats=1                show the harness overlay even when running the package from npm
+ *
+ * `?theme=dark|light` is read by App.vue, which owns the theme toggle.
  */
 function UrlFlag(name, defValue) {
     const value = urlParams.get(name)
@@ -135,9 +138,12 @@ const IS_HOT_RELOAD = (() => {
 
 <script setup>
 import { ref, computed, useTemplateRef, watch, onMounted, onUnmounted } from "vue"
+import { useQuasar } from "quasar"
 import {DxfViewer} from "dxf-viewer"
 import * as three from "three"
 import { diagnostics, ResetDiagnostics } from "@/diagnostics.js"
+
+const $q = useQuasar()
 
 const props = defineProps({
     dxfUrl: {
@@ -170,6 +176,31 @@ const props = defineProps({
 /* Declared so that the listeners the parent binds do not also fall through onto the
  * container div as native DOM listeners. */
 const emit = defineEmits(VIEWER_EVENTS.map(name => "dxf-" + name))
+
+/* Canvas background per theme. The dark one is the library's own default and what CAD packages
+ * draw on; the light one is what this example has always used. `?clearColor` overrides both, so an
+ * arbitrary background can still be exercised against the contrast correction.
+ */
+const CLEAR_COLOR = {light: "#fff", dark: "#000"}
+
+function _ThemeClearColor() {
+    return urlParams.get("clearColor") ?? CLEAR_COLOR[$q.dark.isActive ? "dark" : "light"]
+}
+
+/** Apply the current theme's background to the viewer, if one has been created yet.
+ *
+ * The constructor options cannot carry this: Vue resolves a prop's `default()` before the setup
+ * body runs, so `$q` is not available there. The viewer is created in onMounted and the background
+ * applied in the same task, which is before the page can paint, so the canvas never appears in the
+ * wrong color.
+ */
+function _ApplyBackground() {
+    if (dxfViewer !== null) {
+        dxfViewer.SetClearColor(_ThemeClearColor())
+    }
+}
+
+watch(() => $q.dark.isActive, _ApplyBackground)
 
 const canvasContainer = useTemplateRef("canvasContainer")
 
@@ -470,6 +501,7 @@ watch(() => props.dxfUrl, async dxfUrl => {
 
 onMounted(() => {
     dxfViewer = new DxfViewer(canvasContainer.value, props.options)
+    _ApplyBackground()
     const Subscribe = eventName => {
         dxfViewer.Subscribe(eventName, e => emit("dxf-" + eventName, e))
     }
@@ -570,6 +602,23 @@ defineExpose({Load, GetViewer})
             margin: 4px;
         }
     }
+}
+
+/* The progress text and the harness overlay sit on the canvas rather than on a Quasar surface, so
+ * they do not follow the theme by themselves; Quasar's Dark plugin marks <body>, which is outside
+ * this component. Hence global selectors - and each one wrapped whole in a single :global(), with
+ * the scoped rule's own complexity repeated so that this wins on specificity. Vue's scoped
+ * transform replaces the selector with whatever the parentheses contain, so a `:global(...)`
+ * *prefix* followed by descendants keeps only the prefix and silently drops the rest.
+ */
+:global(body.body--dark .canvasContainer .progress .progressText) {
+    color: #e0e0e0;
+}
+
+:global(body.body--dark .canvasContainer .harness) {
+    background: rgba(30, 30, 30, 0.85);
+    border-color: #4a4a4a;
+    color: #e0e0e0;
 }
 
 </style>
