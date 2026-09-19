@@ -35,6 +35,8 @@
             <q-btn icon="fa-brands fa-github" color="primary" label="This example on GitHub" no-caps
                    class="q-mx-sm github" type="a"
                    href="https://github.com/vagran/dxf-viewer-example-src" />
+            <q-btn icon="favorite" color="pink-12" label="Sponsor" no-caps class="q-mx-sm sponsor"
+                   type="a" href="https://github.com/sponsors/vagran" />
         </q-toolbar>
     </q-header>
     <q-page-container>
@@ -264,7 +266,8 @@ onUnmounted(() => {
 
 <style scoped lang="less">
 
-a.github:hover {
+a.github:hover,
+a.sponsor:hover {
     text-decoration: none;
 }
 
