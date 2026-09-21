@@ -39,7 +39,10 @@ const fonts = [mainFont, aux1Font, aux2Font, aux3Font]
 
 function _OnLoaded() {
     const loaded = viewer.value.GetViewer().GetLayers(true)
-    loaded.forEach(lyr => lyr.isVisible = true)
+    /* A layer the drawing has switched off starts hidden, so its checkbox has to start clear
+     * rather than contradict the canvas.
+     */
+    loaded.forEach(lyr => lyr.isVisible = lyr.visible)
     layers.value = loaded
 }
 
